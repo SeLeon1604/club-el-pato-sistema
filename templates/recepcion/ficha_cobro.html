@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% set manifest_href = "/static/manifest_recepcion.json" %}
+{% block title %}Ficha de socio{% endblock %}
+
+{% block content %}
+{% if socio %}
+<h1>{{ socio.nombre }} {{ socio.apellido }}</h1>
+<p class="subtitle">Socio N° {{ socio.nro_socio }} · {{ socio.categoria }}</p>
+
+<div class="cuotas">
+  {% for cuota in cuotas %}
+  <div class="cuota-item">
+    <span>{{ cuota.periodo }} - {{ cuota.estado }}</span>
+    <span>${{ "%.0f"|format(cuota.monto) }}</span>
+  </div>
+  {% else %}
+  <p class="vacio">Sin cuotas pendientes.</p>
+  {% endfor %}
+</div>
+
+<p class="total">Total a cobrar: ${{ "%.0f"|format(total) }}</p>
+
+<form action="{{ url_for('recepcion.cobrar', socio_id=socio.id) }}" method="POST">
+  {% for cuota in cuotas %}
+  <input type="hidden" name="cuota_id" value="{{ cuota.id }}">
+  {% endfor %}
+  <input type="hidden" name="monto_total" value="{{ total }}">
+
+  <div class="medios-pago">
+    <button type="submit" name="medio_pago" value="efectivo">Efectivo</button>
+    <button type="submit" name="medio_pago" value="transferencia">Transferencia</button>
+  </div>
+</form>
+
+<form action="{{ url_for('recepcion.baja_socio', socio_id=socio.id) }}" method="POST" class="form-baja">
+  <input type="text" name="motivo" placeholder="Motivo de baja">
+  <button type="submit" class="btn-peligro">Dar de baja</button>
+</form>
+
+{% else %}
+<p class="vacio">Socio no encontrado.</p>
+{% endif %}
+
+<a href="{{ url_for('recepcion.index') }}" class="link-salir">Volver</a>
+{% endblock %}

@@ -1,0 +1,13 @@
+{
+  "name": "Club El Pato - Comision",
+  "short_name": "El Pato Comision",
+  "start_url": "/comision/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#2f4858",
+  "icons": [
+    { "src": "/static/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/static/icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

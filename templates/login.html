@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% set manifest_href = "/static/manifest_recepcion.json" %}
+{% block title %}Ingresar - Club El Pato{% endblock %}
+
+{% block content %}
+<div class="login-box">
+  <h1>Club El Pato</h1>
+
+  {% if error %}<p class="error">{{ error }}</p>{% endif %}
+
+  <form method="POST">
+    <label>Perfil</label>
+    <select name="rol" required>
+      <option value="recepcion">Recepcion</option>
+      <option value="comision">Comision</option>
+      <option value="socio">Socio</option>
+    </select>
+
+    <label>PIN / contrasena</label>
+    <input type="password" name="credencial" required>
+
+    <button type="submit">Ingresar</button>
+  </form>
+</div>
+{% endblock %}

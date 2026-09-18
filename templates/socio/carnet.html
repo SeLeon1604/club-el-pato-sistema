@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% set manifest_href = "/static/manifest_socio.json" %}
+{% block title %}Mi carnet - Club El Pato{% endblock %}
+
+{% block content %}
+{% if socio %}
+<div class="carnet">
+  <p class="club-nombre">Club El Pato</p>
+  <h2>{{ socio.nombre }} {{ socio.apellido }}</h2>
+  <p class="detalle">Socio N° {{ socio.nro_socio }} · {{ socio.estado }}</p>
+  <p class="disciplina">{{ socio.disciplina_principal }}</p>
+
+  <!-- TODO: reemplazar por QR real generado con codigo_hash de carnet_qr -->
+  <div class="qr-placeholder" id="qr-code"></div>
+</div>
+
+<h3>Novedades y eventos</h3>
+<div class="eventos">
+  {% for evento in eventos %}
+  <div class="evento-item">
+    <span class="titulo">{{ evento.titulo }}</span>
+    <span class="fecha">{{ evento.fecha_evento }} · {{ evento.lugar }}</span>
+  </div>
+  {% endfor %}
+</div>
+
+<h3>Nuestros auspiciantes</h3>
+<div class="auspiciantes">
+  {% for a in auspiciantes %}
+  <div class="auspiciante-item">{{ a.nombre }}</div>
+  {% endfor %}
+</div>
+
+{% else %}
+<p class="vacio">No se encontro el socio.</p>
+{% endif %}
+
+<a href="{{ url_for('auth.logout') }}" class="link-salir">Cerrar sesion</a>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  // TODO: generar el QR real en el cliente (ej. libreria qrcode.js)
+  // usando el codigo_hash que viene de carnet_qr, no datos sensibles.
+</script>
+{% endblock %}

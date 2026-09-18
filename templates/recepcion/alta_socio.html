@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% set manifest_href = "/static/manifest_recepcion.json" %}
+{% block title %}Nuevo socio{% endblock %}
+
+{% block content %}
+<h1>Nuevo socio</h1>
+
+<form method="POST" class="form-alta">
+  <label>Nombre</label>
+  <input type="text" name="nombre" required>
+
+  <label>Apellido</label>
+  <input type="text" name="apellido" required>
+
+  <label>DNI</label>
+  <input type="text" name="dni" required>
+
+  <label>Categoria</label>
+  <select name="categoria">
+    <option value="activo">Activo</option>
+    <option value="cadete">Cadete</option>
+    <option value="vitalicio">Vitalicio</option>
+    <option value="adherente">Adherente</option>
+  </select>
+
+  <label>Disciplina principal</label>
+  <select name="disciplina_principal">
+    <option value="basquet">Basquet</option>
+    <option value="futbol">Futbol</option>
+    <option value="hockey">Hockey sobre cesped</option>
+    <option value="ninguna">Ninguna</option>
+  </select>
+
+  <button type="submit">Guardar socio</button>
+</form>
+
+<a href="{{ url_for('recepcion.index') }}" class="link-salir">Cancelar</a>
+{% endblock %}

@@ -1,0 +1,122 @@
+/* Base pensada para dedo, no mouse: botones e inputs grandes */
+:root {
+  --azul-club: #2f4858;
+  --gris-texto: #5b6b7c;
+  --rojo-alerta: #b3261e;
+  --verde-ok: #1e7a4c;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+  margin: 0;
+  padding: 0;
+  background: #f4f6f8;
+  color: #1a1a1a;
+}
+
+.app-container {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 1.25rem;
+}
+
+h1 { font-size: 1.4rem; margin: 0 0 0.25rem; color: var(--azul-club); }
+.subtitle { color: var(--gris-texto); margin: 0 0 1rem; }
+
+input, select, button {
+  font-size: 1rem;
+  padding: 0.75rem;
+  height: 48px;
+  border-radius: 10px;
+  border: 1px solid #d0d5dc;
+  width: 100%;
+}
+
+button {
+  background: var(--azul-club);
+  color: white;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-secundario {
+  display: block;
+  text-align: center;
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  border-radius: 10px;
+  border: 2px solid var(--azul-club);
+  color: var(--azul-club);
+  text-decoration: none;
+}
+
+.btn-peligro { background: var(--rojo-alerta); }
+
+.link-salir {
+  display: inline-block;
+  margin-top: 1.5rem;
+  color: var(--gris-texto);
+  text-decoration: none;
+}
+
+.buscador { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
+
+.lista-resultados, .cuotas, .eventos, .auspiciantes {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.item-socio, .cuota-item, .evento-item, .auspiciante-item {
+  background: white;
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  display: flex;
+  justify-content: space-between;
+  text-decoration: none;
+  color: inherit;
+}
+
+.total { font-size: 1.3rem; font-weight: 600; text-align: right; }
+
+.medios-pago { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin: 1rem 0; }
+
+.resumen-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1rem; }
+.card-resumen { background: white; border-radius: 10px; padding: 0.75rem; }
+.card-resumen .label { display: block; font-size: 0.75rem; color: var(--gris-texto); }
+.card-resumen .valor { display: block; font-size: 1.3rem; font-weight: 600; }
+
+.alerta {
+  background: #fce8e6;
+  color: var(--rojo-alerta);
+  padding: 0.75rem;
+  border-radius: 10px;
+  margin-bottom: 1rem;
+}
+
+.carnet {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+.club-nombre { color: var(--gris-texto); margin: 0 0 0.5rem; }
+.qr-placeholder {
+  width: 140px;
+  height: 140px;
+  background: repeating-linear-gradient(45deg, #1a1a1a 0 4px, transparent 4px 8px);
+  margin: 1rem auto 0;
+  border-radius: 8px;
+  opacity: 0.85;
+}
+
+.vacio { color: var(--gris-texto); font-style: italic; }
+.error { color: var(--rojo-alerta); }
+
+.login-box { margin-top: 3rem; display: flex; flex-direction: column; gap: 0.75rem; }
+.login-box form { display: flex; flex-direction: column; gap: 0.75rem; }

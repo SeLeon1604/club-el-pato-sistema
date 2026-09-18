@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% set manifest_href = "/static/manifest_recepcion.json" %}
+{% block title %}Buscar socio{% endblock %}
+
+{% block content %}
+<form action="{{ url_for('recepcion.buscar') }}" method="GET" class="buscador">
+  <input type="text" name="q" value="{{ texto }}" autofocus>
+  <button type="submit">Buscar</button>
+</form>
+
+<div class="lista-resultados">
+  {% for socio in resultados %}
+  <a href="{{ url_for('recepcion.ficha_socio', socio_id=socio.id) }}" class="item-socio">
+    <span class="nombre">{{ socio.nombre }} {{ socio.apellido }}</span>
+    <span class="detalle">Socio N° {{ socio.nro_socio }} · {{ socio.estado }}</span>
+  </a>
+  {% else %}
+  <p class="vacio">No se encontraron socios.</p>
+  {% endfor %}
+</div>
+
+<a href="{{ url_for('recepcion.index') }}" class="link-salir">Volver</a>
+{% endblock %}

@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% set manifest_href = "/static/manifest_comision.json" %}
+{% block title %}Novedades - Club El Pato{% endblock %}
+
+{% block content %}
+<h1>Novedades</h1>
+<p class="subtitle">Club El Pato · vista comision</p>
+
+<div class="resumen-grid">
+  <div class="card-resumen">
+    <span class="label">Cobrado esta semana</span>
+    <span class="valor">${{ "%.0f"|format(resumen.cobrado_semana) }}</span>
+  </div>
+  <div class="card-resumen">
+    <span class="label">Socios activos</span>
+    <span class="valor">{{ resumen.socios_activos }}</span>
+  </div>
+</div>
+
+{% if resumen.morosos %}
+<div class="alerta">
+  {{ resumen.morosos|length }} cuotas vencidas sin registrar pago
+</div>
+{% endif %}
+
+<a href="{{ url_for('auth.logout') }}" class="link-salir">Cerrar sesion</a>
+{% endblock %}

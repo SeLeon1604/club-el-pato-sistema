@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% set manifest_href = "/static/manifest_recepcion.json" %}
+{% block title %}Recepcion - Club El Pato{% endblock %}
+
+{% block content %}
+<h1>Club El Pato</h1>
+<p class="subtitle">Recepcion</p>
+
+<form action="{{ url_for('recepcion.buscar') }}" method="GET" class="buscador">
+  <input type="text" name="q" placeholder="Buscar por nombre, DNI o N° socio" autofocus>
+  <button type="submit">Buscar</button>
+</form>
+
+<a href="{{ url_for('recepcion.alta_socio') }}" class="btn-secundario">+ Nuevo socio</a>
+<a href="{{ url_for('auth.logout') }}" class="link-salir">Cerrar sesion</a>
+{% endblock %}
