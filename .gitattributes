@@ -1,0 +1,12 @@
+# Normaliza los finales de linea: todo se guarda como LF en el repo,
+# Git lo convierte a CRLF solo al pisar el working tree en Windows si
+# hace falta (core.autocrlf=true), asi el diff no se ensucia por esto.
+* text=auto eol=lf
+
+# Binarios: nunca tocar
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.ico binary
+*.woff binary
+*.woff2 binary
