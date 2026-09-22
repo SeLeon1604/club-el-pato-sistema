@@ -8,6 +8,7 @@ del usuario logueado:
 | Recepcion | `/recepcion` | `recepcion` | Tablet: busqueda, cobro de cuotas, alta/baja de socios |
 | Comision | `/comision` | `comision` | Celular de Cristian y comision: novedades, solo lectura |
 | Carnet del socio | `/carnet` | `socio` | Celular del socio: carnet + QR, novedades, auspiciantes |
+| Administracion | `/admin` | `admin` | Tarifas con historial, vencimiento y recargo, generacion de cuotas |
 
 ## Como correrlo localmente
 
@@ -32,6 +33,29 @@ export SUPABASE_KEY="tu-anon-key"
 
 y correr `schema.sql` en el SQL editor de Supabase para crear las tablas.
 
+## Usuarios y base de datos
+
+- Correr `schema.sql` y despues `migraciones/002_tarifas_admin.sql` en Supabase.
+- Usar la **service key** en `SUPABASE_KEY` y definir `SECRET_KEY`.
+- Crear usuarios con hash: `python crear_usuario.py <rol> <email|dni>`
+  (recepcion usa PIN por persona; el resto contrasena).
+- Modo demo: `recepcion@elpato.local`/1234, `comision@elpato.local`,
+  `admin@elpato.local` y socio DNI 30123456, los tres con `demo1234`.
+
+## Cuotas
+
+cuota = tarifa societaria de la categoria + tarifa de cada actividad del
+socio (sin tarifa vale $0; si el total es $0 no se genera cuota). Las
+tarifas no se editan: se carga un valor nuevo con fecha de vigencia y el
+anterior queda en el historial. La cuota usa las tarifas vigentes al dia 1
+de su periodo.
+
+- Generar el mes: boton en `/admin` o `python generar_cuotas.py [AAAA-MM]`
+  (cron el dia 1). Es idempotente.
+- Vencimiento: un dia fijo para todos, configurable. Pasado ese dia la
+  cuota pasa a `vencido` y se le fija el recargo (porcentaje o monto) una
+  sola vez, al abrir la ficha o al correr la generacion.
+
 ## Estructura
 
 ```
@@ -55,9 +79,6 @@ static/
 
 ## Pendiente (a definir en las proximas iteraciones)
 
-- **Autenticacion real**: hoy el login acepta cualquier PIN/password no
-  vacio. Falta conectar contra la tabla `usuarios` con hash real
-  (bcrypt) y, si se usa Supabase Auth, mapear el JWT a `rol`/`socio_id`.
 - **Politicas RLS**: el esqueleto esta en `schema.sql` comentado, hay
   que definirlas segun como quede resuelta la autenticacion.
 - **QR real del carnet**: hoy es un placeholder visual. Falta generar
@@ -65,8 +86,6 @@ static/
   `carnet_qr.codigo_hash`, y en recepcion agregar el lector de camara.
 - **Iconos de la PWA**: los manifests apuntan a `/static/icons/` que
   todavia no tiene los PNG (192x192 y 512x512).
-- **Generacion mensual de cuotas**: falta el proceso (cron / funcion
-  de Supabase) que crea las cuotas de cada socio cada mes.
 - **Resumen de comision**: `db.resumen_comision()` esta resuelto a
   mano en modo demo; en produccion conviene una vista SQL o RPC en
   vez de calcularlo trayendo todo a Python.

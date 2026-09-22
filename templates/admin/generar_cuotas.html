@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% set manifest_href = "/static/manifest_recepcion.json" %}
+{% block title %}Generar cuotas - Club El Pato{% endblock %}
+
+{% block content %}
+<h1>Generar cuotas del mes</h1>
+<p class="subtitle">Crea la cuota de cada socio activo que todavia no la tenga. Se puede repetir sin riesgo: no duplica.</p>
+
+<form method="POST" class="form-alta">
+  <label>Periodo</label>
+  <input type="month" name="periodo" value="{{ periodo }}" required>
+  <button type="submit">Generar</button>
+</form>
+
+{% if resultado %}
+<div class="cuotas">
+  <div class="cuota-item"><span>Cuotas creadas</span><span>{{ resultado.creadas }}</span></div>
+  <div class="cuota-item"><span>Socios que ya la tenian</span><span>{{ resultado.ya_tenian }}</span></div>
+  <div class="cuota-item"><span>Sin cuota (importe $0)</span><span>{{ resultado.sin_importe }}</span></div>
+  <div class="cuota-item"><span>Vencimiento</span><span>{{ resultado.vencimiento }}</span></div>
+  <div class="cuota-item"><span>Cuotas vencidas con recargo aplicado</span><span>{{ resultado.recargos }}</span></div>
+</div>
+{% endif %}
+
+<a href="{{ url_for('admin.index') }}" class="link-salir">Volver</a>
+{% endblock %}

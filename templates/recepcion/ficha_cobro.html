@@ -10,8 +10,9 @@
 <div class="cuotas">
   {% for cuota in cuotas %}
   <div class="cuota-item">
-    <span>{{ cuota.periodo }} - {{ cuota.estado }}</span>
-    <span>${{ "%.0f"|format(cuota.monto) }}</span>
+    <span>{{ cuota.periodo }} - {{ cuota.estado }}
+      {% if cuota.monto_recargo %}(incluye recargo ${{ "%.0f"|format(cuota.monto_recargo) }}){% endif %}</span>
+    <span>${{ "%.0f"|format(cuota.monto + (cuota.monto_recargo or 0)) }}</span>
   </div>
   {% else %}
   <p class="vacio">Sin cuotas pendientes.</p>

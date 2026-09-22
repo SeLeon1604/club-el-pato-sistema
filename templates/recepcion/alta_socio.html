@@ -5,15 +5,17 @@
 {% block content %}
 <h1>Nuevo socio</h1>
 
+{% if error %}<p class="error">{{ error }}</p>{% endif %}
+
 <form method="POST" class="form-alta">
   <label>Nombre</label>
-  <input type="text" name="nombre" required>
+  <input type="text" name="nombre" value="{{ form.get('nombre', '') }}" required>
 
   <label>Apellido</label>
-  <input type="text" name="apellido" required>
+  <input type="text" name="apellido" value="{{ form.get('apellido', '') }}" required>
 
   <label>DNI</label>
-  <input type="text" name="dni" required>
+  <input type="text" name="dni" value="{{ form.get('dni', '') }}" required>
 
   <label>Categoria</label>
   <select name="categoria">
@@ -31,8 +33,95 @@
     <option value="ninguna">Ninguna</option>
   </select>
 
+  <label>Otras actividades (la cuota suma cada una)</label>
+  <div class="checks">
+    {% for act, nombre in [('basquet', 'Basquet'), ('futbol', 'Futbol'), ('hockey', 'Hockey')] %}
+    <label><input type="checkbox" name="actividades" value="{{ act }}"
+      {{ 'checked' if act in form.getlist('actividades') }}> {{ nombre }}</label>
+    {% endfor %}
+  </div>
+
+  {% set modo = form.get('grupo_modo', 'ninguno') %}
+  <label>Grupo familiar</label>
+  <select name="grupo_modo" id="grupo-modo">
+    <option value="ninguno" {{ 'selected' if modo == 'ninguno' }}>Sin grupo</option>
+    <option value="existente" {{ 'selected' if modo == 'existente' }}>Unir a un grupo existente</option>
+    <option value="nuevo" {{ 'selected' if modo == 'nuevo' }}>Crear grupo nuevo</option>
+  </select>
+
+  <div id="grupo-existente" hidden>
+    <input type="search" id="grupo-buscar" placeholder="Buscar por apellido o nombre del grupo" autocomplete="off">
+    <input type="hidden" name="grupo_familiar_id" id="grupo-id" value="{{ form.get('grupo_familiar_id', '') }}">
+    <div id="grupo-resultados" class="lista-resultados"></div>
+    <p id="grupo-elegido" class="subtitle"></p>
+  </div>
+
+  <div id="grupo-nuevo" hidden>
+    <input type="text" name="nombre_grupo" placeholder="Nombre del grupo (ej. Familia Perez)" value="{{ form.get('nombre_grupo', '') }}">
+    <p class="subtitle">Este socio quedara como responsable del grupo.</p>
+  </div>
+
   <button type="submit">Guardar socio</button>
 </form>
 
 <a href="{{ url_for('recepcion.index') }}" class="link-salir">Cancelar</a>
+
+<script>
+(function () {
+  var modo = document.getElementById("grupo-modo");
+  var boxExistente = document.getElementById("grupo-existente");
+  var boxNuevo = document.getElementById("grupo-nuevo");
+  var buscar = document.getElementById("grupo-buscar");
+  var resultados = document.getElementById("grupo-resultados");
+  var idInput = document.getElementById("grupo-id");
+  var elegido = document.getElementById("grupo-elegido");
+  var timer;
+
+  function actualizarModo() {
+    boxExistente.hidden = modo.value !== "existente";
+    boxNuevo.hidden = modo.value !== "nuevo";
+    if (modo.value !== "existente") { idInput.value = ""; elegido.textContent = ""; }
+  }
+
+  function elegir(g) {
+    idInput.value = g.id;
+    elegido.textContent = "Grupo elegido: " + g.nombre_grupo;
+    resultados.textContent = "";
+  }
+
+  function mostrar(grupos) {
+    resultados.textContent = "";
+    if (!grupos.length) {
+      var p = document.createElement("p");
+      p.className = "vacio";
+      p.textContent = "No hay grupos con ese dato.";
+      resultados.appendChild(p);
+      return;
+    }
+    grupos.forEach(function (g) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "btn-secundario";
+      b.textContent = (g.nombre_grupo || "Sin nombre") +
+        (g.miembros && g.miembros.length ? " (" + g.miembros.join(", ") + ")" : "");
+      b.addEventListener("click", function () { elegir(g); });
+      resultados.appendChild(b);
+    });
+  }
+
+  buscar.addEventListener("input", function () {
+    clearTimeout(timer);
+    var q = buscar.value.trim();
+    if (q.length < 2) { resultados.textContent = ""; return; }
+    timer = setTimeout(function () {
+      fetch("{{ url_for('recepcion.buscar_grupos') }}?q=" + encodeURIComponent(q))
+        .then(function (r) { return r.json(); })
+        .then(mostrar);
+    }, 250);
+  });
+
+  modo.addEventListener("change", actualizarModo);
+  actualizarModo();
+})();
+</script>
 {% endblock %}

@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% set manifest_href = "/static/manifest_recepcion.json" %}
+{% block title %}Administracion - Club El Pato{% endblock %}
+
+{% block content %}
+<h1>Club El Pato</h1>
+<p class="subtitle">Administracion</p>
+
+<a href="{{ url_for('admin.tarifas') }}" class="btn-secundario">Tarifas e historial</a>
+<a href="{{ url_for('admin.configuracion') }}" class="btn-secundario">Vencimiento y recargo</a>
+<a href="{{ url_for('admin.generar_cuotas') }}" class="btn-secundario">Generar cuotas del mes</a>
+<a href="{{ url_for('auth.logout') }}" class="link-salir">Cerrar sesion</a>
+{% endblock %}

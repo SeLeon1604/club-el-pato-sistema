@@ -10,6 +10,7 @@ from blueprints.auth import auth_bp
 from blueprints.recepcion import recepcion_bp
 from blueprints.comision import comision_bp
 from blueprints.socio import socio_bp
+from blueprints.admin import admin_bp
 
 
 def create_app():
@@ -20,6 +21,7 @@ def create_app():
     app.register_blueprint(recepcion_bp, url_prefix="/recepcion")
     app.register_blueprint(comision_bp, url_prefix="/comision")
     app.register_blueprint(socio_bp, url_prefix="/carnet")
+    app.register_blueprint(admin_bp, url_prefix="/admin")
 
     @app.route("/")
     def home():
@@ -31,6 +33,8 @@ def create_app():
             return redirect(url_for("comision.novedades"))
         if rol == "socio":
             return redirect(url_for("socio.carnet"))
+        if rol == "admin":
+            return redirect(url_for("admin.index"))
         return redirect(url_for("auth.login"))
 
     return app

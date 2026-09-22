@@ -133,3 +133,7 @@ alter table pagos enable row level security;
 --     auth.jwt() ->> 'rol' in ('recepcion','comision')
 --     or id = (auth.jwt() ->> 'socio_id')::uuid
 --   );
+
+-- Login: un identificador no puede repetirse entre usuarios
+create unique index usuarios_email_uq on usuarios (lower(email)) where email is not null;
+create unique index usuarios_dni_login_uq on usuarios (dni_login) where dni_login is not null;

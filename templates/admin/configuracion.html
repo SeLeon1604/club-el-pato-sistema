@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% set manifest_href = "/static/manifest_recepcion.json" %}
+{% block title %}Configuracion - Club El Pato{% endblock %}
+
+{% block content %}
+<h1>Vencimiento y recargo</h1>
+<p class="subtitle">Un solo dia de vencimiento para todos. Pasado ese dia la cuota vence y se le suma el recargo (una sola vez).</p>
+
+<form method="POST" class="form-alta">
+  <label>Dia de vencimiento (1 a 28)</label>
+  <input type="number" name="dia_vencimiento" min="1" max="28" value="{{ cfg.dia_vencimiento }}" required>
+
+  <label>Tipo de recargo</label>
+  <select name="recargo_tipo">
+    <option value="porcentaje" {{ 'selected' if cfg.recargo_tipo == 'porcentaje' }}>Porcentaje sobre la cuota</option>
+    <option value="monto" {{ 'selected' if cfg.recargo_tipo == 'monto' }}>Monto fijo ($)</option>
+  </select>
+
+  <label>Valor del recargo</label>
+  <input type="number" name="recargo_valor" min="0" step="0.01" value="{{ cfg.recargo_valor }}" required>
+
+  <button type="submit">Guardar</button>
+</form>
+
+<p class="subtitle">El cambio rige para cuotas que se generen o venzan de ahora en adelante; las que ya vencieron conservan su recargo.</p>
+<a href="{{ url_for('admin.index') }}" class="link-salir">Volver</a>
+{% endblock %}

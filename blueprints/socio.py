@@ -16,8 +16,7 @@ def proteger():
 
 @socio_bp.route("/")
 def carnet():
-    # TODO: reemplazar por el socio_id real vinculado al usuario logueado
-    socio = db.obtener_socio("1")
+    socio = db.obtener_socio(session.get("socio_id"))
     eventos = db.eventos_para_socio(socio["disciplina_principal"]) if socio else []
     auspiciantes = db.auspiciantes_activos()
     return render_template(

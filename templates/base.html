@@ -10,7 +10,10 @@
   {% block extra_head %}{% endblock %}
 </head>
 <body>
-  <main class="app-container">
+  <main class="app-container {% block main_class %}{% endblock %}">
+    {% for categoria, mensaje in get_flashed_messages(with_categories=true) %}
+    <p class="{{ 'error' if categoria == 'error' else 'msg-ok' }}">{{ mensaje }}</p>
+    {% endfor %}
     {% block content %}{% endblock %}
   </main>
 
