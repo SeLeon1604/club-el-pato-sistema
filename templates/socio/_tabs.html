@@ -1,0 +1,5 @@
+<nav class="tabs-inferiores">
+  <a href="{{ url_for('socio.carnet') }}" class="tab-item {{ 'activo' if tab_activa == 'carnet' }}">Carnet</a>
+  <a href="{{ url_for('socio.novedades') }}" class="tab-item {{ 'activo' if tab_activa == 'novedades' }}">Novedades</a>
+  <a href="{{ url_for('socio.beneficios') }}" class="tab-item {{ 'activo' if tab_activa == 'beneficios' }}">Beneficios</a>
+</nav>

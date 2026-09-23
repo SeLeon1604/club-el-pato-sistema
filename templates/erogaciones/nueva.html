@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% set manifest_href = "/static/manifest_comision.json" %}
+{% block title %}Cargar erogacion{% endblock %}
+
+{% block content %}
+<h1>Cargar erogacion</h1>
+<p class="subtitle">Gastos del club (mantenimiento, indumentaria, servicios, etc.)</p>
+
+<form method="POST" class="form-inline">
+  <div>
+    <label>Concepto</label>
+    <input type="text" name="concepto" required>
+  </div>
+  <div>
+    <label>Categoria</label>
+    <input type="text" name="categoria" list="categorias-sugeridas" placeholder="opcional">
+    <datalist id="categorias-sugeridas">
+      {% for c in categorias %}<option value="{{ c }}">{% endfor %}
+    </datalist>
+  </div>
+  <div><label>Monto ($)</label><input type="number" name="monto" min="0" step="0.01" required></div>
+  <div><label>Fecha</label><input type="date" name="fecha" value="{{ hoy }}" required></div>
+  <button type="submit">Guardar</button>
+</form>
+
+<a href="{{ volver }}" class="link-salir">Volver</a>
+{% endblock %}

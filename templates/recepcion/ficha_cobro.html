@@ -9,29 +9,40 @@
 
 <div class="cuotas">
   {% for cuota in cuotas %}
-  <div class="cuota-item">
-    <span>{{ cuota.periodo }} - {{ cuota.estado }}
-      {% if cuota.monto_recargo %}(incluye recargo ${{ "%.0f"|format(cuota.monto_recargo) }}){% endif %}</span>
+  <label class="cuota-item">
+    <span>
+      <input type="checkbox" name="cuota_id" value="{{ cuota.id }}" class="check-cuota"
+             data-monto="{{ cuota.monto + (cuota.monto_recargo or 0) }}" checked form="form-cobro">
+      {% if cuota.socio_nombre and cuota.socio_id != socio.id %}{{ cuota.socio_nombre }} · {% endif %}
+      {{ cuota.periodo }} - {{ cuota.estado }}
+      {% if cuota.monto_recargo %}(incluye recargo ${{ "%.0f"|format(cuota.monto_recargo) }}){% endif %}
+    </span>
     <span>${{ "%.0f"|format(cuota.monto + (cuota.monto_recargo or 0)) }}</span>
-  </div>
+  </label>
   {% else %}
   <p class="vacio">Sin cuotas pendientes.</p>
   {% endfor %}
 </div>
 
-<p class="total">Total a cobrar: ${{ "%.0f"|format(total) }}</p>
+<p class="total">Total a cobrar: $<span id="total-cobrar">{{ "%.0f"|format(total) }}</span></p>
 
-<form action="{{ url_for('recepcion.cobrar', socio_id=socio.id) }}" method="POST">
-  {% for cuota in cuotas %}
-  <input type="hidden" name="cuota_id" value="{{ cuota.id }}">
-  {% endfor %}
-  <input type="hidden" name="monto_total" value="{{ total }}">
-
+<form id="form-cobro" action="{{ url_for('recepcion.cobrar', socio_id=socio.id) }}" method="POST">
+  <input type="hidden" name="monto_total" id="monto-total-input" value="{{ total }}">
   <div class="medios-pago">
     <button type="submit" name="medio_pago" value="efectivo">Efectivo</button>
     <button type="submit" name="medio_pago" value="transferencia">Transferencia</button>
   </div>
 </form>
+
+<div id="confirmacion-pago" hidden>
+  <p class="msg-ok">Cobro registrado.</p>
+  <a id="link-recibo" href="#" target="_blank" class="btn-secundario">Ver recibo</a>
+  {% if email_habilitado %}
+  <button id="btn-enviar-email" type="button">Enviar por email</button>
+  {% endif %}
+  <button id="btn-compartir" type="button" hidden>Compartir</button>
+  <p id="msg-recibo" class="subtitle"></p>
+</div>
 
 <form action="{{ url_for('recepcion.baja_socio', socio_id=socio.id) }}" method="POST" class="form-baja">
   <input type="text" name="motivo" placeholder="Motivo de baja">
@@ -43,4 +54,75 @@
 {% endif %}
 
 <a href="{{ url_for('recepcion.index') }}" class="link-salir">Volver</a>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+(function () {
+  var socioId = "{{ socio.id if socio else '' }}";
+  var checks = document.querySelectorAll(".check-cuota");
+  var totalEl = document.getElementById("total-cobrar");
+  var montoTotalInput = document.getElementById("monto-total-input");
+  var form = document.getElementById("form-cobro");
+
+  function recalcular() {
+    var total = 0;
+    checks.forEach(function (chk) {
+      if (chk.checked) total += parseFloat(chk.dataset.monto);
+    });
+    totalEl.textContent = total.toFixed(0);
+    montoTotalInput.value = total.toFixed(2);
+  }
+  checks.forEach(function (chk) { chk.addEventListener("change", recalcular); });
+
+  if (!form) return;
+
+  function mostrarConfirmacion(pago) {
+    var url = "/recepcion/socio/" + socioId + "/pago/" + pago.id + "/recibo";
+    document.getElementById("link-recibo").href = url;
+    document.getElementById("confirmacion-pago").hidden = false;
+    form.hidden = true;
+
+    var btnCompartir = document.getElementById("btn-compartir");
+    if (navigator.canShare) {
+      btnCompartir.hidden = false;
+      btnCompartir.onclick = function () {
+        fetch(url).then(function (r) { return r.blob(); }).then(function (blob) {
+          var file = new File([blob], "recibo.pdf", { type: "application/pdf" });
+          if (navigator.canShare({ files: [file] })) {
+            navigator.share({ files: [file], title: "Recibo de pago" }).catch(function () {});
+          }
+        });
+      };
+    }
+
+    var btnEmail = document.getElementById("btn-enviar-email");
+    if (btnEmail) {
+      btnEmail.onclick = function () {
+        btnEmail.disabled = true;
+        fetch(url + "/enviar", { method: "POST" })
+          .then(function (r) { return r.json(); })
+          .then(function (res) {
+            document.getElementById("msg-recibo").textContent = res.ok
+              ? "Enviado a " + res.enviado_a : res.error;
+            btnEmail.disabled = false;
+          });
+      };
+    }
+  }
+
+  form.addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    var boton = ev.submitter;
+    var datos = new FormData(form);
+    datos.append("medio_pago", boton.value);
+    fetch(form.action, { method: "POST", body: datos })
+      .then(function (r) { return r.json(); })
+      .then(mostrarConfirmacion)
+      .catch(function () {
+        document.getElementById("msg-recibo").textContent = "No se pudo registrar el cobro.";
+      });
+  });
+})();
+</script>
 {% endblock %}

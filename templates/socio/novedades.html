@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% set manifest_href = "/static/manifest_socio.json" %}
+{% block title %}Novedades - Club El Pato{% endblock %}
+{% block main_class %}con-tabs{% endblock %}
+
+{% block content %}
+<h1>Novedades</h1>
+
+<h3>Proximos partidos</h3>
+<div class="eventos">
+  {% for p in partidos %}
+  <div class="evento-item">
+    <span class="titulo">{{ p.categoria }} vs {{ p.rival }} ({{ p.condicion }})</span>
+    <span class="fecha">{{ p.fecha_hora }} · {{ p.lugar or "" }}</span>
+  </div>
+  {% else %}
+  <p class="vacio">No hay partidos programados.</p>
+  {% endfor %}
+</div>
+
+<h3>Eventos del club</h3>
+<div class="eventos">
+  {% for evento in eventos %}
+  <div class="evento-item">
+    <span class="titulo">{{ evento.titulo }}</span>
+    <span class="fecha">{{ evento.fecha_evento }} · {{ evento.lugar or "" }}</span>
+  </div>
+  {% else %}
+  <p class="vacio">Sin eventos por ahora.</p>
+  {% endfor %}
+</div>
+
+{% if beneficio %}
+<h3>Beneficio de la semana</h3>
+<div class="beneficio-semana">
+  <span class="titulo">{{ beneficio.nombre }}</span>
+  <span class="detalle">{{ beneficio.descripcion_beneficio or "" }}</span>
+</div>
+{% endif %}
+
+{% include "socio/_tabs.html" %}
+{% endblock %}

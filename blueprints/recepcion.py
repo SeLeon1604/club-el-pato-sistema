@@ -2,9 +2,11 @@
 App de recepcion (tablet). Rol: recepcion.
 Pantallas: menu principal, busqueda, ficha+cobro, alta de socio.
 """
-from flask import Blueprint, render_template, request, session, redirect, url_for, jsonify
+from flask import Blueprint, render_template, request, session, redirect, url_for, jsonify, Response, abort
+from config import Config
 import cuotas as cuotas_service
 import db
+import recibo as recibo_service
 
 recepcion_bp = Blueprint("recepcion", __name__)
 
@@ -34,10 +36,22 @@ def buscar():
 @recepcion_bp.route("/socio/<socio_id>")
 def ficha_socio(socio_id):
     socio = db.obtener_socio(socio_id)
-    cuotas_service.aplicar_recargos(socio_id=socio_id)  # vencidas al dia, con su recargo
-    cuotas = db.cuotas_pendientes_de_socio(socio_id)
+    grupo_id = socio.get("grupo_familiar_id") if socio else None
+
+    if grupo_id:
+        # vencidas al dia, con su recargo, para todos los integrantes
+        for miembro in db.socios_de_grupo(grupo_id):
+            cuotas_service.aplicar_recargos(socio_id=miembro["id"])
+        cuotas = db.cuotas_pendientes_grupo(grupo_id)
+    else:
+        cuotas_service.aplicar_recargos(socio_id=socio_id)
+        cuotas = db.cuotas_pendientes_de_socio(socio_id)
+
     total = sum(c["monto"] + (c.get("monto_recargo") or 0) for c in cuotas)
-    return render_template("recepcion/ficha_cobro.html", socio=socio, cuotas=cuotas, total=total)
+    return render_template(
+        "recepcion/ficha_cobro.html", socio=socio, cuotas=cuotas, total=total,
+        email_habilitado=bool(Config.EMAIL_PROVIDER),
+    )
 
 
 @recepcion_bp.route("/socio/<socio_id>/cobrar", methods=["POST"])
@@ -46,13 +60,44 @@ def cobrar(socio_id):
     medio_pago = request.form.get("medio_pago")
     monto_total = float(request.form.get("monto_total", 0))
 
-    resultado = db.registrar_pago(
+    pago = db.registrar_pago(
         cuota_ids=cuota_ids,
         medio_pago=medio_pago,
         monto_total=monto_total,
         registrado_por=session.get("usuario_id"),
     )
-    return jsonify(resultado)
+    return jsonify(pago)
+
+
+@recepcion_bp.route("/socio/<socio_id>/pago/<pago_id>/recibo")
+def recibo(socio_id, pago_id):
+    detalle = db.obtener_pago_detalle(pago_id)
+    if not detalle:
+        abort(404)
+    pdf_bytes = recibo_service.generar_pdf(detalle)
+    numero = detalle["pago"].get("numero") or detalle["pago"]["id"]
+    return Response(
+        pdf_bytes, mimetype="application/pdf",
+        headers={"Content-Disposition": f'inline; filename="recibo-{numero}.pdf"'},
+    )
+
+
+@recepcion_bp.route("/socio/<socio_id>/pago/<pago_id>/recibo/enviar", methods=["POST"])
+def enviar_recibo(socio_id, pago_id):
+    detalle = db.obtener_pago_detalle(pago_id)
+    if not detalle:
+        return jsonify({"ok": False, "error": "Pago no encontrado."}), 404
+
+    destinatario = db.email_para_recibo(socio_id)
+    if not destinatario:
+        return jsonify({"ok": False, "error": "El socio no tiene email cargado."}), 400
+
+    pdf_bytes = recibo_service.generar_pdf(detalle)
+    try:
+        recibo_service.enviar_email(destinatario, pdf_bytes, detalle)
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 502
+    return jsonify({"ok": True, "enviado_a": destinatario})
 
 
 @recepcion_bp.route("/grupos")

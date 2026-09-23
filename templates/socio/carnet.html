@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% set manifest_href = "/static/manifest_socio.json" %}
 {% block title %}Mi carnet - Club El Pato{% endblock %}
+{% block main_class %}con-tabs{% endblock %}
 
 {% block content %}
 {% if socio %}
@@ -12,30 +13,18 @@
 
   <!-- TODO: reemplazar por QR real generado con codigo_hash de carnet_qr -->
   <div class="qr-placeholder" id="qr-code"></div>
+
+  {% if auspiciante %}
+  <p class="franja-auspicia">Auspicia: {{ auspiciante.nombre }}</p>
+  {% endif %}
 </div>
 
-<h3>Novedades y eventos</h3>
-<div class="eventos">
-  {% for evento in eventos %}
-  <div class="evento-item">
-    <span class="titulo">{{ evento.titulo }}</span>
-    <span class="fecha">{{ evento.fecha_evento }} · {{ evento.lugar }}</span>
-  </div>
-  {% endfor %}
-</div>
-
-<h3>Nuestros auspiciantes</h3>
-<div class="auspiciantes">
-  {% for a in auspiciantes %}
-  <div class="auspiciante-item">{{ a.nombre }}</div>
-  {% endfor %}
-</div>
-
+<a href="{{ url_for('auth.logout') }}" class="link-salir">Cerrar sesion</a>
 {% else %}
 <p class="vacio">No se encontro el socio.</p>
 {% endif %}
 
-<a href="{{ url_for('auth.logout') }}" class="link-salir">Cerrar sesion</a>
+{% include "socio/_tabs.html" %}
 {% endblock %}
 
 {% block extra_scripts %}

@@ -6,7 +6,7 @@ En MODO_DEMO (sin credenciales de Supabase) devuelve datos de ejemplo
 en memoria, para poder levantar el proyecto y ver las pantallas
 funcionando sin tener la base configurada todavia.
 """
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 
 import bcrypt
 from config import Config
@@ -25,12 +25,26 @@ _SOCIOS_DEMO = [
     {
         "id": "1", "nro_socio": 231, "nombre": "Juan", "apellido": "Martinez",
         "dni": "30123456", "categoria": "activo", "disciplina_principal": "hockey",
-        "estado": "activo", "grupo_familiar_id": "g1",
+        "estado": "activo", "grupo_familiar_id": "g1", "fecha_alta": "2025-06-01",
+        "email": "juan.martinez@example.com",
     },
     {
         "id": "2", "nro_socio": 232, "nombre": "Sofia", "apellido": "Martinez",
         "dni": "41987654", "categoria": "cadete", "disciplina_principal": "hockey",
-        "estado": "activo", "grupo_familiar_id": "g1",
+        "estado": "activo", "grupo_familiar_id": "g1", "fecha_alta": "2025-06-01",
+        "email": None,
+    },
+    {
+        "id": "3", "nro_socio": 233, "nombre": "Lucia", "apellido": "Fernandez",
+        "dni": "45111222", "categoria": "adherente", "disciplina_principal": "ninguna",
+        "estado": "activo", "grupo_familiar_id": None, "fecha_alta": "2026-09-10",
+        "email": "lucia.fernandez@example.com",
+    },
+    {
+        "id": "4", "nro_socio": 234, "nombre": "Marcos", "apellido": "Diaz",
+        "dni": "40333444", "categoria": "activo", "disciplina_principal": "futbol",
+        "estado": "inactivo", "grupo_familiar_id": None, "fecha_alta": "2025-03-01",
+        "fecha_baja": "2026-09-15", "motivo_baja": "Mudanza", "email": None,
     },
 ]
 
@@ -42,6 +56,8 @@ _CUOTAS_DEMO = [
     {"id": "c1", "socio_id": "1", "periodo": "2026-08", "monto": 8500,
      "estado": "vencido", "fecha_vencimiento": "2026-08-31"},
     {"id": "c2", "socio_id": "1", "periodo": "2026-09", "monto": 8500,
+     "estado": "pendiente", "fecha_vencimiento": "2026-09-30"},
+    {"id": "c3", "socio_id": "2", "periodo": "2026-09", "monto": 6000,
      "estado": "pendiente", "fecha_vencimiento": "2026-09-30"},
 ]
 
@@ -109,9 +125,40 @@ _EVENTOS_DEMO = [
 ]
 
 _AUSPICIANTES_DEMO = [
-    {"id": "a1", "nombre": "Autoservicio del barrio", "logo_url": None, "link": None},
-    {"id": "a2", "nombre": "Farmacia central", "logo_url": None, "link": None},
+    {"id": "a1", "nombre": "Autoservicio del barrio", "logo_url": None, "link": None,
+     "activo": True, "descripcion_beneficio": "10% de descuento pagando en efectivo",
+     "codigo_descuento": None, "categoria_comercio": "gastronomia"},
+    {"id": "a2", "nombre": "Farmacia central", "logo_url": None, "link": None,
+     "activo": True, "descripcion_beneficio": "15% en perfumeria mostrando el carnet",
+     "codigo_descuento": None, "categoria_comercio": "salud"},
+    {"id": "a3", "nombre": "Deportes Sur", "logo_url": None, "link": None,
+     "activo": True, "descripcion_beneficio": "20% en indumentaria deportiva",
+     "codigo_descuento": "ELPATO20", "categoria_comercio": "indumentaria"},
 ]
+
+_FIXTURE_DEMO = [
+    {"id": "f1", "disciplina": "hockey", "categoria": "Primera", "rival": "Club Andino",
+     "fecha_hora": "2026-09-27T15:00:00", "lugar": "cancha propia", "condicion": "local",
+     "resultado_propio": None, "resultado_rival": None},
+    {"id": "f2", "disciplina": "hockey", "categoria": "Reserva", "rival": "San Martin",
+     "fecha_hora": "2026-10-04T13:00:00", "lugar": "cancha de San Martin", "condicion": "visitante",
+     "resultado_propio": None, "resultado_rival": None},
+    {"id": "f3", "disciplina": "basquet", "categoria": "Primera", "rival": "Independiente",
+     "fecha_hora": "2026-09-25T21:00:00", "lugar": "gimnasio", "condicion": "local",
+     "resultado_propio": None, "resultado_rival": None},
+]
+
+_EROGACIONES_DEMO = [
+    {"id": "er1", "concepto": "Pelotas de basquet", "categoria": "indumentaria",
+     "monto": 45000, "fecha": "2026-09-05", "registrado_por": "u2"},
+    {"id": "er2", "concepto": "Arreglo de canios", "categoria": "mantenimiento",
+     "monto": 120000, "fecha": "2026-09-12", "registrado_por": "u4"},
+]
+
+# Se completan en tiempo de ejecucion via registrar_pago (necesarios
+# para poder generar la constancia de pago tambien en modo demo).
+_PAGOS_DEMO = []
+_PAGOS_CUOTAS_DEMO = []
 
 
 # ---------------------------------------------------------------------
@@ -209,15 +256,17 @@ def crear_socio(datos):
 
 
 def dar_de_baja_socio(socio_id, motivo):
+    hoy = date.today().isoformat()
     if Config.MODO_DEMO:
         socio = obtener_socio(socio_id)
         if socio:
             socio["estado"] = "inactivo"
             socio["motivo_baja"] = motivo
+            socio["fecha_baja"] = hoy
         return socio
     return (
         _client.table("socios")
-        .update({"estado": "inactivo", "motivo_baja": motivo})
+        .update({"estado": "inactivo", "motivo_baja": motivo, "fecha_baja": hoy})
         .eq("id", socio_id)
         .execute()
         .data
@@ -316,6 +365,68 @@ def eliminar_grupo(grupo_id):
         _GRUPOS_DEMO[:] = [g for g in _GRUPOS_DEMO if g["id"] != grupo_id]
         return
     _client.table("grupos_familiares").delete().eq("id", grupo_id).execute()
+
+
+def socios_de_grupo(grupo_familiar_id):
+    """Id, nombre, apellido y nro_socio de todos los integrantes de un
+    grupo familiar."""
+    if Config.MODO_DEMO:
+        return [
+            {"id": s["id"], "nombre": s["nombre"], "apellido": s["apellido"],
+             "nro_socio": s["nro_socio"]}
+            for s in _SOCIOS_DEMO if s.get("grupo_familiar_id") == grupo_familiar_id
+        ]
+    return (
+        _client.table("socios")
+        .select("id,nombre,apellido,nro_socio")
+        .eq("grupo_familiar_id", grupo_familiar_id)
+        .execute()
+        .data
+    )
+
+
+def cuotas_pendientes_grupo(grupo_familiar_id):
+    """Cuotas pendientes o vencidas de todos los integrantes de un grupo
+    familiar, cada una con el nombre y N° de socio de su dueno, para
+    poder cobrarlas juntas en un solo pago."""
+    socios = socios_de_grupo(grupo_familiar_id)
+    ids = [s["id"] for s in socios]
+    if Config.MODO_DEMO:
+        cuotas = [dict(c) for c in _CUOTAS_DEMO
+                  if c["socio_id"] in ids and c["estado"] in ("pendiente", "vencido")]
+    elif ids:
+        cuotas = (
+            _client.table("cuotas").select("*")
+            .in_("socio_id", ids).in_("estado", ["pendiente", "vencido"])
+            .order("socio_id").order("periodo").execute().data
+        )
+    else:
+        cuotas = []
+    por_id = {s["id"]: s for s in socios}
+    for c in cuotas:
+        s = por_id.get(c["socio_id"], {})
+        c["socio_nombre"] = f"{s.get('nombre', '')} {s.get('apellido', '')}".strip()
+        c["socio_nro"] = s.get("nro_socio")
+    return sorted(cuotas, key=lambda c: (c["socio_nro"] or 0, c["periodo"]))
+
+
+def email_para_recibo(socio_id):
+    """Email a donde mandar el recibo: el del socio, o si no tiene
+    cargado, el del responsable de su grupo familiar."""
+    socio = obtener_socio(socio_id)
+    if not socio:
+        return None
+    if socio.get("email"):
+        return socio["email"]
+    grupo_id = socio.get("grupo_familiar_id")
+    if not grupo_id:
+        return None
+    grupo = obtener_grupo(grupo_id)
+    responsable_id = grupo.get("responsable_socio_id") if grupo else None
+    if not responsable_id or responsable_id == socio_id:
+        return None
+    responsable = obtener_socio(responsable_id)
+    return responsable.get("email") if responsable else None
 
 
 # ---------------------------------------------------------------------
@@ -506,13 +617,25 @@ def registrar_evento(tipo, detalle, usuario_id, socio_id=None):
 def registrar_pago(cuota_ids, medio_pago, monto_total, registrado_por):
     """
     Crea un registro en `pagos` y vincula las cuotas cubiertas en
-    `pagos_cuotas`. Marca esas cuotas como pagadas.
+    `pagos_cuotas`. Marca esas cuotas como pagadas. Devuelve el pago
+    creado (con "id" y "numero"), en ambos modos, para poder generar
+    la constancia de pago justo despues.
     """
     if Config.MODO_DEMO:
         for c in _CUOTAS_DEMO:
             if c["id"] in cuota_ids:
                 c["estado"] = "pagado"
-        return {"ok": True, "cuotas_pagadas": cuota_ids}
+        pago = {
+            "id": f"p{len(_PAGOS_DEMO) + 1}",
+            "numero": len(_PAGOS_DEMO) + 1,
+            "fecha_pago": datetime.now(timezone.utc).isoformat(),
+            "monto_pagado": monto_total,
+            "medio_pago": medio_pago,
+            "registrado_por": registrado_por,
+        }
+        _PAGOS_DEMO.append(pago)
+        _PAGOS_CUOTAS_DEMO.extend({"pago_id": pago["id"], "cuota_id": cid} for cid in cuota_ids)
+        return pago
 
     pago = _client.table("pagos").insert({
         "monto_pagado": monto_total,
@@ -529,24 +652,124 @@ def registrar_pago(cuota_ids, medio_pago, monto_total, registrado_por):
     return pago
 
 
-# ---------------------------------------------------------------------
-# Novedades (panel de comision)
-# ---------------------------------------------------------------------
-def resumen_comision():
+def obtener_pago_detalle(pago_id):
+    """Pago con sus cuotas, cada una con el nombre, N° de socio y email
+    de su dueno. Es la fuente de datos de la constancia de pago; cuando
+    el pago cubrio a varios integrantes de un grupo familiar, trae las
+    cuotas de todos para que el recibo los detalle por separado."""
     if Config.MODO_DEMO:
-        return {
-            "cobrado_semana": 312400,
-            "socios_activos": len([s for s in _SOCIOS_DEMO if s["estado"] == "activo"]),
-            "morosos": [c for c in _CUOTAS_DEMO if c["estado"] == "vencido"],
-        }
-    # En produccion esto conviene resolverlo con una vista SQL o RPC
-    # en Supabase en vez de traer todo y calcular en Python.
-    raise NotImplementedError("Definir vista/RPC de resumen en Supabase")
+        pago = next((p for p in _PAGOS_DEMO if p["id"] == pago_id), None)
+        if not pago:
+            return None
+        cuota_ids = {pc["cuota_id"] for pc in _PAGOS_CUOTAS_DEMO if pc["pago_id"] == pago_id}
+        cuotas = [dict(c) for c in _CUOTAS_DEMO if c["id"] in cuota_ids]
+        socios = {s["id"]: s for s in _SOCIOS_DEMO}
+    else:
+        res = _client.table("pagos").select("*").eq("id", pago_id).limit(1).execute().data
+        pago = res[0] if res else None
+        if not pago:
+            return None
+        vinculos = _client.table("pagos_cuotas").select("cuota_id").eq("pago_id", pago_id).execute().data
+        ids = [v["cuota_id"] for v in vinculos]
+        cuotas = _client.table("cuotas").select("*").in_("id", ids).execute().data if ids else []
+        socio_ids = list({c["socio_id"] for c in cuotas})
+        filas = (
+            _client.table("socios").select("id,nombre,apellido,nro_socio,email")
+            .in_("id", socio_ids).execute().data
+        ) if socio_ids else []
+        socios = {s["id"]: s for s in filas}
+
+    for c in cuotas:
+        s = socios.get(c["socio_id"], {})
+        c["socio_nombre"] = f"{s.get('nombre', '')} {s.get('apellido', '')}".strip()
+        c["socio_nro"] = s.get("nro_socio")
+
+    return {"pago": pago, "cuotas": cuotas}
+
+
+# ---------------------------------------------------------------------
+# Panel de comision: pagos, altas/bajas y erogaciones por periodo
+# ---------------------------------------------------------------------
+def pagos_en_periodo(desde_iso, hasta_iso):
+    """Pagos con fecha_pago entre desde y hasta (fechas AAAA-MM-DD, el
+    rango incluye todo el dia `hasta`)."""
+    desde_ts, hasta_ts = f"{desde_iso}T00:00:00", f"{hasta_iso}T23:59:59"
+    if Config.MODO_DEMO:
+        return [p for p in _PAGOS_DEMO if desde_ts <= p["fecha_pago"] <= hasta_ts]
+    return (
+        _client.table("pagos").select("monto_pagado,medio_pago,fecha_pago")
+        .gte("fecha_pago", desde_ts).lte("fecha_pago", hasta_ts)
+        .execute().data
+    )
+
+
+def altas_en_periodo(desde_iso, hasta_iso):
+    if Config.MODO_DEMO:
+        return sum(1 for s in _SOCIOS_DEMO if desde_iso <= s.get("fecha_alta", "") <= hasta_iso)
+    res = (
+        _client.table("socios").select("id", count="exact")
+        .gte("fecha_alta", desde_iso).lte("fecha_alta", hasta_iso).execute()
+    )
+    return res.count or 0
+
+
+def bajas_en_periodo(desde_iso, hasta_iso):
+    if Config.MODO_DEMO:
+        return sum(1 for s in _SOCIOS_DEMO
+                   if s.get("fecha_baja") and desde_iso <= s["fecha_baja"] <= hasta_iso)
+    res = (
+        _client.table("socios").select("id", count="exact")
+        .gte("fecha_baja", desde_iso).lte("fecha_baja", hasta_iso).execute()
+    )
+    return res.count or 0
+
+
+def erogaciones_en_periodo(desde_iso, hasta_iso):
+    if Config.MODO_DEMO:
+        return [e for e in _EROGACIONES_DEMO if desde_iso <= e["fecha"] <= hasta_iso]
+    return (
+        _client.table("erogaciones").select("*")
+        .gte("fecha", desde_iso).lte("fecha", hasta_iso)
+        .order("fecha", desc=True).execute().data
+    )
+
+
+def crear_erogacion(concepto, categoria, monto, fecha, registrado_por):
+    fila = {
+        "concepto": concepto, "categoria": categoria or None,
+        "monto": float(monto), "fecha": fecha, "registrado_por": registrado_por,
+    }
+    if Config.MODO_DEMO:
+        nueva = {**fila, "id": f"er{len(_EROGACIONES_DEMO) + 1}"}
+        _EROGACIONES_DEMO.append(nueva)
+        return nueva
+    return _client.table("erogaciones").insert(fila).execute().data[0]
 
 
 # ---------------------------------------------------------------------
 # Carnet / novedades / auspiciantes (app del socio)
 # ---------------------------------------------------------------------
+def fixture_proximos(disciplina, ahora_iso=None):
+    """Partidos de `disciplina` (todas las categorias) que todavia no
+    pasaron, ordenados por fecha ascendente."""
+    ahora_iso = ahora_iso or datetime.now(timezone.utc).isoformat()
+    if Config.MODO_DEMO:
+        return sorted(
+            (f for f in _FIXTURE_DEMO
+             if f["disciplina"] == disciplina and f["fecha_hora"] >= ahora_iso),
+            key=lambda f: f["fecha_hora"],
+        )
+    return (
+        _client.table("fixture")
+        .select("*")
+        .eq("disciplina", disciplina)
+        .gte("fecha_hora", ahora_iso)
+        .order("fecha_hora")
+        .execute()
+        .data
+    )
+
+
 def eventos_para_socio(disciplina_socio):
     if Config.MODO_DEMO:
         return [

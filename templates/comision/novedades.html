@@ -1,27 +1,59 @@
 {% extends "base.html" %}
 {% set manifest_href = "/static/manifest_comision.json" %}
-{% block title %}Novedades - Club El Pato{% endblock %}
+{% block title %}Caja - Club El Pato{% endblock %}
 
 {% block content %}
-<h1>Novedades</h1>
+<h1>Caja</h1>
 <p class="subtitle">Club El Pato · vista comision</p>
+
+<div class="checks selector-periodo">
+  {% for p, etiqueta in [("hoy", "Hoy"), ("semana", "Esta semana"), ("mes", "Este mes"), ("mes_anterior", "Mes anterior")] %}
+  <a href="{{ url_for('comision.novedades', periodo=p) }}"
+     class="btn-secundario {{ 'activo' if periodo == p }}">{{ etiqueta }}</a>
+  {% endfor %}
+</div>
+
+<form method="GET" class="form-inline">
+  <input type="hidden" name="periodo" value="rango">
+  <div><label>Desde</label><input type="date" name="desde" value="{{ desde or '' }}" required></div>
+  <div><label>Hasta</label><input type="date" name="hasta" value="{{ hasta or '' }}" required></div>
+  <button type="submit">Ver rango</button>
+</form>
+
+<p class="subtitle">Periodo mostrado: {{ resumen.desde }} a {{ resumen.hasta }}</p>
 
 <div class="resumen-grid">
   <div class="card-resumen">
-    <span class="label">Cobrado esta semana</span>
-    <span class="valor">${{ "%.0f"|format(resumen.cobrado_semana) }}</span>
+    <span class="label">Total cobrado</span>
+    <span class="valor">${{ "%.0f"|format(resumen.total_cobrado) }}</span>
   </div>
   <div class="card-resumen">
-    <span class="label">Socios activos</span>
-    <span class="valor">{{ resumen.socios_activos }}</span>
+    <span class="label">Efectivo</span>
+    <span class="valor">${{ "%.0f"|format(resumen.efectivo) }} ({{ "%.0f"|format(resumen.efectivo_pct) }}%)</span>
+  </div>
+  <div class="card-resumen">
+    <span class="label">Transferencia</span>
+    <span class="valor">${{ "%.0f"|format(resumen.transferencia) }} ({{ "%.0f"|format(resumen.transferencia_pct) }}%)</span>
+  </div>
+  <div class="card-resumen">
+    <span class="label">Altas / Bajas</span>
+    <span class="valor">{{ resumen.altas }} / {{ resumen.bajas }}</span>
   </div>
 </div>
 
-{% if resumen.morosos %}
-<div class="alerta">
-  {{ resumen.morosos|length }} cuotas vencidas sin registrar pago
+<h3>Erogaciones del periodo</h3>
+<p class="total">Total: ${{ "%.0f"|format(resumen.erogaciones_total) }}</p>
+<div class="tabla-scroll">
+<table class="tabla">
+  <tr><th>Categoria</th><th class="num">Monto</th></tr>
+  {% for categoria, monto in resumen.erogaciones_por_categoria %}
+  <tr><td>{{ categoria|capitalize }}</td><td class="num">${{ "%.0f"|format(monto) }}</td></tr>
+  {% else %}
+  <tr><td colspan="2" class="vacio">Sin erogaciones en este periodo.</td></tr>
+  {% endfor %}
+</table>
 </div>
-{% endif %}
 
+<a href="{{ url_for('erogaciones.nueva') }}" class="btn-secundario">+ Cargar erogacion</a>
 <a href="{{ url_for('auth.logout') }}" class="link-salir">Cerrar sesion</a>
 {% endblock %}

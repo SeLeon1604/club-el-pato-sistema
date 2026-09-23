@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% set manifest_href = "/static/manifest_socio.json" %}
+{% block title %}Beneficios - Club El Pato{% endblock %}
+{% block main_class %}con-tabs{% endblock %}
+
+{% block content %}
+<h1>Beneficios</h1>
+<p class="subtitle">Descuentos de nuestros auspiciantes</p>
+
+{% for categoria, lista in agrupados %}
+<h3>{{ categoria|capitalize }}</h3>
+<div class="auspiciantes">
+  {% for a in lista %}
+  <div class="auspiciante-item">
+    <span class="titulo">{{ a.nombre }}</span>
+    <span class="detalle">{{ a.descripcion_beneficio or "" }}</span>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<p class="vacio">Todavia no hay beneficios cargados.</p>
+{% endfor %}
+
+{% include "socio/_tabs.html" %}
+{% endblock %}

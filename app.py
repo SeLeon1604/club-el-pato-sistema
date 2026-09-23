@@ -11,6 +11,7 @@ from blueprints.recepcion import recepcion_bp
 from blueprints.comision import comision_bp
 from blueprints.socio import socio_bp
 from blueprints.admin import admin_bp
+from blueprints.erogaciones import erogaciones_bp
 
 
 def create_app():
@@ -22,6 +23,7 @@ def create_app():
     app.register_blueprint(comision_bp, url_prefix="/comision")
     app.register_blueprint(socio_bp, url_prefix="/carnet")
     app.register_blueprint(admin_bp, url_prefix="/admin")
+    app.register_blueprint(erogaciones_bp, url_prefix="/erogaciones")
 
     @app.route("/")
     def home():
