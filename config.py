@@ -16,6 +16,11 @@ class Config:
     # pantallas sin depender de la base.
     MODO_DEMO = not (SUPABASE_URL and SUPABASE_KEY)
 
+    # Huso horario del club, para que "hoy/esta semana/este mes" en el
+    # panel de comision se calculen sobre su dia calendario real y no
+    # sobre el del servidor (que en produccion suele correr en UTC).
+    CLUB_TZ = os.environ.get("CLUB_TZ", "America/Argentina/Buenos_Aires")
+
     # Datos del club para la constancia de pago (PDF)
     CLUB_NOMBRE = os.environ.get("CLUB_NOMBRE", "Club El Pato")
     CLUB_DIRECCION = os.environ.get("CLUB_DIRECCION", "")

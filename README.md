@@ -64,6 +64,14 @@ export SMTP_PASSWORD="..."
 Opcionalmente `CLUB_NOMBRE`, `CLUB_DIRECCION` y `CLUB_CUIT` para el
 encabezado del PDF (por defecto `CLUB_NOMBRE="Club El Pato"`).
 
+## Huso horario
+
+El panel de comision calcula "hoy/esta semana/este mes" segun
+`CLUB_TZ` (por defecto `America/Argentina/Buenos_Aires`), no segun el
+huso del servidor: en produccion suele correr en UTC, y sin esto un
+cobro de la tarde/noche quedaba afuera de la caja del dia por caer del
+lado equivocado del corte en UTC.
+
 ## Cuotas
 
 cuota = tarifa societaria de la categoria + tarifa de cada actividad del

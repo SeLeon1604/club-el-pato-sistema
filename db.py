@@ -690,10 +690,10 @@ def obtener_pago_detalle(pago_id):
 # ---------------------------------------------------------------------
 # Panel de comision: pagos, altas/bajas y erogaciones por periodo
 # ---------------------------------------------------------------------
-def pagos_en_periodo(desde_iso, hasta_iso):
-    """Pagos con fecha_pago entre desde y hasta (fechas AAAA-MM-DD, el
-    rango incluye todo el dia `hasta`)."""
-    desde_ts, hasta_ts = f"{desde_iso}T00:00:00", f"{hasta_iso}T23:59:59"
+def pagos_en_periodo(desde_ts, hasta_ts):
+    """Pagos con fecha_pago entre desde y hasta (timestamps ISO con
+    huso horario ya resueltos por resumen.py, no fechas sueltas: el
+    rango del dia calendario del club no coincide con el de UTC)."""
     if Config.MODO_DEMO:
         return [p for p in _PAGOS_DEMO if desde_ts <= p["fecha_pago"] <= hasta_ts]
     return (
