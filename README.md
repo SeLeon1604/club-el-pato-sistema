@@ -28,7 +28,7 @@ Para conectar Supabase de verdad, definir:
 
 ```bash
 export SUPABASE_URL="https://tu-proyecto.supabase.co"
-export SUPABASE_KEY="tu-anon-key"
+export SUPABASE_KEY="tu-service-key"
 ```
 
 y correr `schema.sql` en el SQL editor de Supabase para crear las tablas.
@@ -36,8 +36,13 @@ y correr `schema.sql` en el SQL editor de Supabase para crear las tablas.
 ## Usuarios y base de datos
 
 - Correr `schema.sql` y despues, en orden, las migraciones de la
-  carpeta `migraciones/` (002, 003...) en Supabase.
+  carpeta `migraciones/` (002, 003, 004...) en Supabase.
 - Usar la **service key** en `SUPABASE_KEY` y definir `SECRET_KEY`.
+  Esta app no usa Supabase Auth (el login es propio, con sesion de
+  Flask), asi que el backend siempre pasa por la service key - por
+  eso las tablas tienen RLS habilitado sin policies: no afecta al
+  backend, pero cierra el paso a la anon key si algun dia se usa o
+  se filtra (ver el comentario en `schema.sql`).
 - Crear usuarios con hash: `python crear_usuario.py <rol> <email|dni>`
   (recepcion usa PIN por persona; el resto contrasena).
 - Modo demo: `recepcion@elpato.local`/1234, `comision@elpato.local`,
@@ -132,8 +137,6 @@ static/
 
 ## Pendiente (a definir en las proximas iteraciones)
 
-- **Politicas RLS**: el esqueleto esta en `schema.sql` comentado, hay
-  que definirlas segun como quede resuelta la autenticacion.
 - **Iconos de la PWA**: los manifests apuntan a `/static/icons/` que
   todavia no tiene los PNG (192x192 y 512x512).
 - **Responsable de grupo familiar no-socio**: por ahora el

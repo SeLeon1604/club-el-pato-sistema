@@ -118,21 +118,21 @@ create table eventos_sistema (
 );
 
 -- ---------------------------------------------------------------------
--- Row Level Security (esqueleto - ajustar segun como se resuelva auth)
+-- Row Level Security
 -- ---------------------------------------------------------------------
+-- Esta app no usa Supabase Auth: el login es propio (sesion de Flask +
+-- bcrypt contra `usuarios`) y el backend se conecta a Supabase siempre
+-- con la service key (ver README). La service key ignora RLS siempre,
+-- haya o no policies definidas - por eso no tiene sentido escribir
+-- policies por rol en base a auth.jwt(), ese claim no existe nunca en
+-- este flujo. Lo que sí logra habilitar RLS sin ninguna policy es
+-- cerrarle el acceso a la anon key: si algun dia se filtra, o si se
+-- agrega supabase-js del lado del cliente, no va a poder leer ni
+-- escribir nada en estas tablas (el resto de las tablas se cierran
+-- igual en las migraciones 002 a 004).
 alter table socios enable row level security;
 alter table cuotas enable row level security;
 alter table pagos enable row level security;
-
--- Ejemplo: recepcion y comision pueden leer todo; el socio solo su fila.
--- Esto asume que el JWT trae el socio_id y el rol en sus claims
--- (definir esto al implementar la autenticacion real con Supabase Auth).
---
--- create policy "socio_ve_su_propia_ficha" on socios
---   for select using (
---     auth.jwt() ->> 'rol' in ('recepcion','comision')
---     or id = (auth.jwt() ->> 'socio_id')::uuid
---   );
 
 -- Login: un identificador no puede repetirse entre usuarios
 create unique index usuarios_email_uq on usuarios (lower(email)) where email is not null;
