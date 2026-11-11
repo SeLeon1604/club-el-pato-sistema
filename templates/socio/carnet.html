@@ -11,8 +11,7 @@
   <p class="detalle">Socio N° {{ socio.nro_socio }} · {{ socio.estado }}</p>
   <p class="disciplina">{{ socio.disciplina_principal }}</p>
 
-  <!-- TODO: reemplazar por QR real generado con codigo_hash de carnet_qr -->
-  <div class="qr-placeholder" id="qr-code"></div>
+  <div class="qr-placeholder" id="qr-code" data-codigo="{{ codigo_qr or '' }}"></div>
 
   {% if auspiciante %}
   <p class="franja-auspicia">Auspicia: {{ auspiciante.nombre }}</p>
@@ -28,8 +27,19 @@
 {% endblock %}
 
 {% block extra_scripts %}
+<script src="/static/js/qrcode.min.js"></script>
 <script>
-  // TODO: generar el QR real en el cliente (ej. libreria qrcode.js)
-  // usando el codigo_hash que viene de carnet_qr, no datos sensibles.
+  (function () {
+    var contenedor = document.getElementById("qr-code");
+    var codigo = contenedor ? contenedor.dataset.codigo : "";
+    if (codigo) {
+      // Se codifica el codigo_hash de carnet_qr, nunca datos del socio.
+      new QRCode(contenedor, {
+        text: codigo, width: 160, height: 160,
+        colorDark: "#1a1a1a", colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.M,
+      });
+    }
+  })();
 </script>
 {% endblock %}

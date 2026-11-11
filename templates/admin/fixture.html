@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% set manifest_href = "/static/manifest_recepcion.json" %}
+{% block title %}Fixture - Club El Pato{% endblock %}
+{% block main_class %}ancho{% endblock %}
+
+{% block content %}
+<h1>Fixture</h1>
+<p class="subtitle">Partidos que se muestran en "Proximos partidos" de la app del socio hasta que pasan.</p>
+
+<h2>Cargar partido</h2>
+<form method="POST" class="form-inline">
+  <div>
+    <label>Disciplina</label>
+    <select name="disciplina" required>
+      {% for act in actividades %}<option value="{{ act }}">{{ act }}</option>{% endfor %}
+    </select>
+  </div>
+  <div><label>Categoria</label><input type="text" name="categoria" required></div>
+  <div><label>Rival</label><input type="text" name="rival" required></div>
+  <div><label>Fecha y hora</label><input type="datetime-local" name="fecha_hora" required></div>
+  <div>
+    <label>Condicion</label>
+    <select name="condicion" required>
+      <option value="local">Local</option>
+      <option value="visitante">Visitante</option>
+    </select>
+  </div>
+  <div><label>Lugar</label><input type="text" name="lugar"></div>
+  <button type="submit">Cargar</button>
+</form>
+
+<h2>Partidos cargados</h2>
+<div class="tabla-scroll">
+<table class="tabla">
+  <tr><th>Fecha</th><th>Disciplina</th><th>Categoria</th><th>Rival</th><th>Cond.</th><th>Resultado</th><th></th></tr>
+  {% for p in partidos %}
+  <tr>
+    <td>{{ p.fecha_hora[:16].replace("T", " ") }}</td>
+    <td>{{ p.disciplina }}</td>
+    <td>{{ p.categoria }}</td>
+    <td>{{ p.rival }}</td>
+    <td>{{ p.condicion }}</td>
+    <td>
+      <form action="{{ url_for('admin.resultado_partido', fixture_id=p.id) }}" method="POST" class="resultado-form">
+        <input type="number" name="resultado_propio" min="0" value="{{ p.resultado_propio if p.resultado_propio is not none else '' }}">
+        <span>-</span>
+        <input type="number" name="resultado_rival" min="0" value="{{ p.resultado_rival if p.resultado_rival is not none else '' }}">
+        <button type="submit">Guardar</button>
+      </form>
+    </td>
+    <td>
+      <form action="{{ url_for('admin.eliminar_partido', fixture_id=p.id) }}" method="POST"
+            onsubmit="return confirm('Eliminar este partido?')">
+        <button type="submit" class="btn-peligro">Eliminar</button>
+      </form>
+    </td>
+  </tr>
+  {% else %}
+  <tr><td colspan="7" class="vacio">Sin partidos cargados.</td></tr>
+  {% endfor %}
+</table>
+</div>
+
+<a href="{{ url_for('admin.index') }}" class="link-salir">Volver</a>
+{% endblock %}

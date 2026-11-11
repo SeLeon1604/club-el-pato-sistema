@@ -6,6 +6,7 @@ En MODO_DEMO (sin credenciales de Supabase) devuelve datos de ejemplo
 en memoria, para poder levantar el proyecto y ver las pantallas
 funcionando sin tener la base configurada todavia.
 """
+import secrets
 from datetime import date, datetime, timezone
 
 import bcrypt
@@ -159,6 +160,9 @@ _EROGACIONES_DEMO = [
 # para poder generar la constancia de pago tambien en modo demo).
 _PAGOS_DEMO = []
 _PAGOS_CUOTAS_DEMO = []
+
+# Se completa en tiempo de ejecucion via obtener_o_crear_codigo_qr.
+_CARNET_QR_DEMO = {}
 
 
 # ---------------------------------------------------------------------
@@ -797,3 +801,111 @@ def auspiciantes_activos():
         .execute()
         .data
     )
+
+
+def obtener_o_crear_codigo_qr(socio_id):
+    """codigo_hash del carnet QR del socio (tabla carnet_qr); se genera
+    la primera vez que se pide y despues queda fijo."""
+    if Config.MODO_DEMO:
+        fila = _CARNET_QR_DEMO.get(socio_id)
+        if not fila:
+            fila = {"socio_id": socio_id, "codigo_hash": secrets.token_urlsafe(24),
+                     "revocado": False}
+            _CARNET_QR_DEMO[socio_id] = fila
+        return fila["codigo_hash"]
+
+    existente = (
+        _client.table("carnet_qr").select("codigo_hash")
+        .eq("socio_id", socio_id).limit(1).execute().data
+    )
+    if existente:
+        return existente[0]["codigo_hash"]
+    codigo = secrets.token_urlsafe(24)
+    _client.table("carnet_qr").insert({"socio_id": socio_id, "codigo_hash": codigo}).execute()
+    return codigo
+
+
+def obtener_socio_por_codigo_qr(codigo_hash):
+    """Socio asociado a ese codigo de carnet, o None si no existe o esta
+    revocado (para el lector de camara en recepcion)."""
+    if Config.MODO_DEMO:
+        fila = next(
+            (f for f in _CARNET_QR_DEMO.values()
+             if f["codigo_hash"] == codigo_hash and not f["revocado"]), None,
+        )
+        return obtener_socio(fila["socio_id"]) if fila else None
+
+    res = (
+        _client.table("carnet_qr").select("socio_id")
+        .eq("codigo_hash", codigo_hash).eq("revocado", False)
+        .limit(1).execute().data
+    )
+    return obtener_socio(res[0]["socio_id"]) if res else None
+
+
+# ---------------------------------------------------------------------
+# Fixture y auspiciantes (admin)
+# ---------------------------------------------------------------------
+def listar_fixture():
+    """Todos los partidos (pasados y futuros), mas recientes primero."""
+    if Config.MODO_DEMO:
+        return sorted((dict(f) for f in _FIXTURE_DEMO),
+                      key=lambda f: f["fecha_hora"], reverse=True)
+    return _client.table("fixture").select("*").order("fecha_hora", desc=True).execute().data
+
+
+def crear_partido(datos):
+    if Config.MODO_DEMO:
+        nuevo = {**datos, "id": f"f{len(_FIXTURE_DEMO) + 1}",
+                 "resultado_propio": None, "resultado_rival": None}
+        _FIXTURE_DEMO.append(nuevo)
+        return nuevo
+    return _client.table("fixture").insert(datos).execute().data[0]
+
+
+def actualizar_resultado_partido(fixture_id, resultado_propio, resultado_rival):
+    cambios = {"resultado_propio": resultado_propio, "resultado_rival": resultado_rival}
+    if Config.MODO_DEMO:
+        f = next((f for f in _FIXTURE_DEMO if f["id"] == fixture_id), None)
+        if f:
+            f.update(cambios)
+        return
+    _client.table("fixture").update(cambios).eq("id", fixture_id).execute()
+
+
+def eliminar_partido(fixture_id):
+    if Config.MODO_DEMO:
+        _FIXTURE_DEMO[:] = [f for f in _FIXTURE_DEMO if f["id"] != fixture_id]
+        return
+    _client.table("fixture").delete().eq("id", fixture_id).execute()
+
+
+def listar_auspiciantes():
+    """Todos los auspiciantes, incluidos los inactivos, para /admin."""
+    if Config.MODO_DEMO:
+        return sorted((dict(a) for a in _AUSPICIANTES_DEMO), key=lambda a: a.get("orden") or 0)
+    return _client.table("auspiciantes").select("*").order("orden").execute().data
+
+
+def obtener_auspiciante(auspiciante_id):
+    if Config.MODO_DEMO:
+        return next((a for a in _AUSPICIANTES_DEMO if a["id"] == auspiciante_id), None)
+    res = _client.table("auspiciantes").select("*").eq("id", auspiciante_id).limit(1).execute().data
+    return res[0] if res else None
+
+
+def crear_auspiciante(datos):
+    if Config.MODO_DEMO:
+        nuevo = {**datos, "id": f"a{len(_AUSPICIANTES_DEMO) + 1}"}
+        _AUSPICIANTES_DEMO.append(nuevo)
+        return nuevo
+    return _client.table("auspiciantes").insert(datos).execute().data[0]
+
+
+def actualizar_auspiciante(auspiciante_id, datos):
+    if Config.MODO_DEMO:
+        a = obtener_auspiciante(auspiciante_id)
+        if a:
+            a.update(datos)
+        return
+    _client.table("auspiciantes").update(datos).eq("id", auspiciante_id).execute()

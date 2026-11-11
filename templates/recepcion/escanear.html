@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% set manifest_href = "/static/manifest_recepcion.json" %}
+{% block title %}Escanear carnet{% endblock %}
+
+{% block content %}
+<h1>Escanear carnet</h1>
+<p class="subtitle" id="msg-estado">Apunta la camara al QR del carnet del socio.</p>
+
+<div class="video-qr">
+  <video id="video" playsinline autoplay muted></video>
+</div>
+
+<a href="{{ url_for('recepcion.index') }}" class="link-salir">Volver</a>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="/static/js/jsqr.min.js"></script>
+<script>
+(function () {
+  var video = document.getElementById("video");
+  var msg = document.getElementById("msg-estado");
+  var canvas = document.createElement("canvas");
+  var ctx = canvas.getContext("2d", { willReadFrequently: true });
+  var detenido = false;
+
+  function tick() {
+    if (detenido) return;
+    if (video.readyState === video.HAVE_ENOUGH_DATA) {
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      var datos = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      var resultado = jsQR(datos.data, datos.width, datos.height);
+      if (resultado && resultado.data) {
+        detenido = true;
+        video.srcObject.getTracks().forEach(function (t) { t.stop(); });
+        window.location.href = "{{ url_for('recepcion.buscar_por_qr', codigo_hash='__codigo__') }}"
+          .replace("__codigo__", encodeURIComponent(resultado.data));
+        return;
+      }
+    }
+    requestAnimationFrame(tick);
+  }
+
+  navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+    .then(function (stream) {
+      video.srcObject = stream;
+      requestAnimationFrame(tick);
+    })
+    .catch(function () {
+      msg.textContent = "No se pudo acceder a la camara. Revisa los permisos del navegador.";
+      msg.classList.add("error");
+    });
+})();
+</script>
+{% endblock %}

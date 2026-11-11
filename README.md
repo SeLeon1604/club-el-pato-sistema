@@ -116,21 +116,26 @@ static/
   manifest_socio.json      manifest PWA del socio
   sw.js                    service worker (shell offline, sin cache de escrituras)
   css/style.css            estilos base, pensado para dedo no mouse
+  js/qrcode.min.js         genera el QR del carnet (davidshimjs/qrcodejs, MIT)
+  js/jsqr.min.js           lee el QR desde la camara (cozmo/jsQR, MIT)
 ```
+
+## Carnet QR y fixture/auspiciantes
+
+- El carnet del socio muestra un QR real generado en el cliente a partir
+  de `carnet_qr.codigo_hash` (se crea la primera vez que se ve el carnet;
+  no contiene datos del socio). En recepcion, el boton "Escanear carnet"
+  abre la camara y busca al socio por ese codigo.
+- Fixture y auspiciantes ya tienen pantalla en `/admin` (cargar partido,
+  registrar resultado, cargar y editar auspiciante). Ya no hace falta
+  insertarlos a mano en Supabase.
 
 ## Pendiente (a definir en las proximas iteraciones)
 
 - **Politicas RLS**: el esqueleto esta en `schema.sql` comentado, hay
   que definirlas segun como quede resuelta la autenticacion.
-- **QR real del carnet**: hoy es un placeholder visual. Falta generar
-  el QR en el cliente (ej. libreria `qrcode.js`) a partir de
-  `carnet_qr.codigo_hash`, y en recepcion agregar el lector de camara.
 - **Iconos de la PWA**: los manifests apuntan a `/static/icons/` que
   todavia no tiene los PNG (192x192 y 512x512).
-- **Carga de fixture y auspiciantes**: todavia no tienen pantalla en
-  `/admin`, se cargan directo en las tablas de Supabase (igual que
-  hoy con auspiciantes). Si el club las usa seguido conviene agregar
-  esas pantallas.
 - **Responsable de grupo familiar no-socio**: por ahora el
   responsable de un grupo familiar siempre es un socio (categoria
   `adherente` si no practica ninguna actividad). Queda pendiente de

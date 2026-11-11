@@ -12,6 +12,8 @@ const ARCHIVOS_SHELL = [
   "/static/manifest_recepcion.json",
   "/static/manifest_comision.json",
   "/static/manifest_socio.json",
+  "/static/js/qrcode.min.js",
+  "/static/js/jsqr.min.js",
 ];
 
 self.addEventListener("install", (event) => {

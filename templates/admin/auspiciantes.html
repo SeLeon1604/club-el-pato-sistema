@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% set manifest_href = "/static/manifest_recepcion.json" %}
+{% block title %}Auspiciantes - Club El Pato{% endblock %}
+{% block main_class %}ancho{% endblock %}
+
+{% block content %}
+<h1>Auspiciantes</h1>
+<p class="subtitle">Se muestran en la pestaña "Beneficios" y como "Beneficio de la semana" en la app del socio.</p>
+
+<h2>Cargar auspiciante</h2>
+<form method="POST" class="form-inline">
+  <div><label>Nombre</label><input type="text" name="nombre" required></div>
+  <div><label>Categoria de comercio</label><input type="text" name="categoria_comercio" placeholder="ej. gastronomia"></div>
+  <div><label>Descripcion del beneficio</label><input type="text" name="descripcion_beneficio"></div>
+  <div><label>Codigo de descuento</label><input type="text" name="codigo_descuento"></div>
+  <div><label>Link</label><input type="text" name="link"></div>
+  <div><label>Orden</label><input type="number" name="orden" min="0" value="0"></div>
+  <button type="submit">Cargar</button>
+</form>
+
+<h2>Cargados</h2>
+<div class="tabla-scroll">
+<table class="tabla">
+  <tr><th>Nombre</th><th>Categoria</th><th>Beneficio</th><th>Estado</th><th></th></tr>
+  {% for a in auspiciantes %}
+  <tr class="{{ 'anulada' if not a.activo }}">
+    <td>{{ a.nombre }}</td>
+    <td>{{ a.categoria_comercio or "-" }}</td>
+    <td>{{ a.descripcion_beneficio or "-" }}</td>
+    <td>{{ "activo" if a.activo else "inactivo" }}</td>
+    <td><a href="{{ url_for('admin.editar_auspiciante', auspiciante_id=a.id) }}" class="btn-secundario">Editar</a></td>
+  </tr>
+  {% else %}
+  <tr><td colspan="5" class="vacio">Sin auspiciantes cargados.</td></tr>
+  {% endfor %}
+</table>
+</div>
+
+<a href="{{ url_for('admin.index') }}" class="link-salir">Volver</a>
+{% endblock %}

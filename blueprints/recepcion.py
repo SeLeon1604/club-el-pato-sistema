@@ -2,7 +2,7 @@
 App de recepcion (tablet). Rol: recepcion.
 Pantallas: menu principal, busqueda, ficha+cobro, alta de socio.
 """
-from flask import Blueprint, render_template, request, session, redirect, url_for, jsonify, Response, abort
+from flask import Blueprint, render_template, request, session, redirect, url_for, jsonify, Response, abort, flash
 from config import Config
 import cuotas as cuotas_service
 import db
@@ -31,6 +31,20 @@ def buscar():
     texto = request.args.get("q", "")
     resultados = db.buscar_socios(texto) if texto else []
     return render_template("recepcion/busqueda.html", resultados=resultados, texto=texto)
+
+
+@recepcion_bp.route("/escanear")
+def escanear():
+    return render_template("recepcion/escanear.html")
+
+
+@recepcion_bp.route("/qr/<codigo_hash>")
+def buscar_por_qr(codigo_hash):
+    socio = db.obtener_socio_por_codigo_qr(codigo_hash)
+    if not socio:
+        flash("No se encontro ningun socio con ese carnet.", "error")
+        return redirect(url_for("recepcion.escanear"))
+    return redirect(url_for("recepcion.ficha_socio", socio_id=socio["id"]))
 
 
 @recepcion_bp.route("/socio/<socio_id>")

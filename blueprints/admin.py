@@ -1,12 +1,12 @@
 """
 Panel de administracion. Rol: admin.
-Tarifas con historial, configuracion (vencimiento y recargo) y
-generacion mensual de cuotas.
+Tarifas con historial, configuracion (vencimiento y recargo),
+generacion mensual de cuotas, fixture de partidos y auspiciantes.
 """
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal, InvalidOperation
 
-from flask import Blueprint, render_template, request, session, redirect, url_for, flash
+from flask import Blueprint, render_template, request, session, redirect, url_for, flash, abort
 
 import cuotas
 import db
@@ -160,3 +160,137 @@ def generar_cuotas():
             resultado = cuotas.generar_cuotas(periodo, session["usuario_id"])
             resultado["recargos"] = cuotas.aplicar_recargos()
     return render_template("admin/generar_cuotas.html", periodo=periodo, resultado=resultado)
+
+
+# ---------------------------------------------------------------------
+# Fixture (partidos)
+# ---------------------------------------------------------------------
+@admin_bp.route("/fixture", methods=["GET", "POST"])
+def fixture():
+    if request.method == "POST":
+        disciplina = request.form.get("disciplina", "")
+        categoria = request.form.get("categoria", "").strip()
+        rival = request.form.get("rival", "").strip()
+        fecha_hora = request.form.get("fecha_hora", "").strip()
+        condicion = request.form.get("condicion", "")
+        lugar = request.form.get("lugar", "").strip()
+        error = None
+
+        if disciplina not in cuotas.ACTIVIDADES:
+            error = "Disciplina invalida."
+        elif not (categoria and rival):
+            error = "Categoria y rival son obligatorios."
+        elif condicion not in ("local", "visitante"):
+            error = "Condicion invalida."
+        else:
+            try:
+                datetime.fromisoformat(fecha_hora)
+            except ValueError:
+                error = "Fecha y hora invalidas."
+
+        if error:
+            flash(error, "error")
+        else:
+            nuevo = db.crear_partido({
+                "disciplina": disciplina, "categoria": categoria, "rival": rival,
+                "fecha_hora": fecha_hora, "condicion": condicion, "lugar": lugar or None,
+            })
+            db.registrar_evento(
+                "edicion", {"accion": "alta_partido", "fixture_id": nuevo["id"]},
+                session["usuario_id"],
+            )
+            flash("Partido cargado.", "ok")
+        return redirect(url_for("admin.fixture"))
+
+    return render_template(
+        "admin/fixture.html", partidos=db.listar_fixture(),
+        actividades=cuotas.ACTIVIDADES, hoy=date.today().isoformat(),
+    )
+
+
+@admin_bp.route("/fixture/<fixture_id>/resultado", methods=["POST"])
+def resultado_partido(fixture_id):
+    def _entero(valor):
+        return int(valor) if valor and valor.strip().isdigit() else None
+
+    db.actualizar_resultado_partido(
+        fixture_id,
+        _entero(request.form.get("resultado_propio", "")),
+        _entero(request.form.get("resultado_rival", "")),
+    )
+    db.registrar_evento(
+        "edicion", {"accion": "resultado_partido", "fixture_id": fixture_id},
+        session["usuario_id"],
+    )
+    flash("Resultado guardado.", "ok")
+    return redirect(url_for("admin.fixture"))
+
+
+@admin_bp.route("/fixture/<fixture_id>/eliminar", methods=["POST"])
+def eliminar_partido(fixture_id):
+    db.eliminar_partido(fixture_id)
+    db.registrar_evento(
+        "edicion", {"accion": "baja_partido", "fixture_id": fixture_id},
+        session["usuario_id"],
+    )
+    flash("Partido eliminado.", "ok")
+    return redirect(url_for("admin.fixture"))
+
+
+# ---------------------------------------------------------------------
+# Auspiciantes
+# ---------------------------------------------------------------------
+def _datos_auspiciante(form):
+    orden = form.get("orden", "").strip()
+    return {
+        "nombre": form.get("nombre", "").strip(),
+        "logo_url": form.get("logo_url", "").strip() or None,
+        "link": form.get("link", "").strip() or None,
+        "orden": int(orden) if orden.isdigit() else 0,
+        "categoria_comercio": form.get("categoria_comercio", "").strip() or None,
+        "descripcion_beneficio": form.get("descripcion_beneficio", "").strip() or None,
+        "codigo_descuento": form.get("codigo_descuento", "").strip() or None,
+        "activo": form.get("activo") == "on",
+    }
+
+
+@admin_bp.route("/auspiciantes", methods=["GET", "POST"])
+def auspiciantes():
+    if request.method == "POST":
+        datos = _datos_auspiciante(request.form)
+        datos["activo"] = True  # un auspiciante nuevo arranca activo
+        if not datos["nombre"]:
+            flash("El nombre es obligatorio.", "error")
+        else:
+            nuevo = db.crear_auspiciante(datos)
+            db.registrar_evento(
+                "edicion", {"accion": "alta_auspiciante", "auspiciante_id": nuevo["id"]},
+                session["usuario_id"],
+            )
+            flash("Auspiciante cargado.", "ok")
+        return redirect(url_for("admin.auspiciantes"))
+
+    return render_template("admin/auspiciantes.html", auspiciantes=db.listar_auspiciantes())
+
+
+@admin_bp.route("/auspiciantes/<auspiciante_id>/editar", methods=["GET", "POST"])
+def editar_auspiciante(auspiciante_id):
+    actual = db.obtener_auspiciante(auspiciante_id)
+    if not actual:
+        abort(404)
+
+    if request.method == "POST":
+        datos = _datos_auspiciante(request.form)
+        if not datos["nombre"]:
+            flash("El nombre es obligatorio.", "error")
+        else:
+            db.actualizar_auspiciante(auspiciante_id, datos)
+            db.registrar_evento(
+                "edicion", {"accion": "edicion_auspiciante", "auspiciante_id": auspiciante_id},
+                session["usuario_id"],
+            )
+            flash("Auspiciante actualizado.", "ok")
+            return redirect(url_for("admin.auspiciantes"))
+        actual = {**actual, **datos}
+
+    return render_template("admin/auspiciante_editar.html", a=actual)

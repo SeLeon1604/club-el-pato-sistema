@@ -32,8 +32,10 @@ def carnet():
     socio = db.obtener_socio(session.get("socio_id"))
     auspiciantes = db.auspiciantes_activos()
     auspiciante_random = random.choice(auspiciantes) if auspiciantes else None
+    codigo_qr = db.obtener_o_crear_codigo_qr(socio["id"]) if socio else None
     return render_template(
-        "socio/carnet.html", socio=socio, auspiciante=auspiciante_random, tab_activa="carnet"
+        "socio/carnet.html", socio=socio, auspiciante=auspiciante_random,
+        codigo_qr=codigo_qr, tab_activa="carnet",
     )
 
 

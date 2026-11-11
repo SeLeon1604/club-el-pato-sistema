@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% set manifest_href = "/static/manifest_recepcion.json" %}
+{% block title %}Editar auspiciante{% endblock %}
+{% block main_class %}ancho{% endblock %}
+
+{% block content %}
+<h1>Editar auspiciante</h1>
+
+<form method="POST" class="form-inline">
+  <div><label>Nombre</label><input type="text" name="nombre" value="{{ a.nombre }}" required></div>
+  <div><label>Categoria de comercio</label><input type="text" name="categoria_comercio" value="{{ a.categoria_comercio or '' }}"></div>
+  <div><label>Descripcion del beneficio</label><input type="text" name="descripcion_beneficio" value="{{ a.descripcion_beneficio or '' }}"></div>
+  <div><label>Codigo de descuento</label><input type="text" name="codigo_descuento" value="{{ a.codigo_descuento or '' }}"></div>
+  <div><label>Link</label><input type="text" name="link" value="{{ a.link or '' }}"></div>
+  <div><label>Orden</label><input type="number" name="orden" min="0" value="{{ a.orden or 0 }}"></div>
+  <div class="checks">
+    <label><input type="checkbox" name="activo" {{ "checked" if a.activo }}> Activo</label>
+  </div>
+  <button type="submit">Guardar</button>
+</form>
+
+<a href="{{ url_for('admin.auspiciantes') }}" class="link-salir">Volver</a>
+{% endblock %}
