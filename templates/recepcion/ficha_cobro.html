@@ -7,6 +7,14 @@
 <h1>{{ socio.nombre }} {{ socio.apellido }}</h1>
 <p class="subtitle">Socio N° {{ socio.nro_socio }} · {{ socio.categoria }}</p>
 
+{% if grupo %}
+<p class="subtitle">
+  Grupo familiar: {{ grupo.nombre_grupo or "sin nombre" }}
+  {% if responsable_nombre %} · Responsable: {{ responsable_nombre }}{% endif %}
+  · <a href="{{ url_for('recepcion.responsable_grupo', grupo_id=grupo.id, socio_id=socio.id) }}">editar responsable</a>
+</p>
+{% endif %}
+
 <div class="cuotas">
   {% for cuota in cuotas %}
   <label class="cuota-item">

@@ -136,11 +136,7 @@ static/
   insertarlos a mano en Supabase.
 - Los iconos de las 3 PWA (`static/icons/icon-192.png` e `icon-512.png`)
   son el escudo real del club.
-
-## Pendiente (a definir en las proximas iteraciones)
-
-- **Responsable de grupo familiar no-socio**: por ahora el
-  responsable de un grupo familiar siempre es un socio (categoria
-  `adherente` si no practica ninguna actividad). Queda pendiente de
-  confirmar con el club si hace falta soportar un responsable que no
-  sea socio.
+- El responsable de un grupo familiar puede ser un socio del grupo o
+  una persona que no es socia (nombre, DNI, telefono y email sueltos).
+  Se edita desde la ficha de cobro de cualquier integrante del grupo
+  en recepcion (`/recepcion/grupos/<id>/responsable`).

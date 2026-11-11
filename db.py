@@ -37,9 +37,9 @@ _SOCIOS_DEMO = [
     },
     {
         "id": "3", "nro_socio": 233, "nombre": "Lucia", "apellido": "Fernandez",
-        "dni": "45111222", "categoria": "adherente", "disciplina_principal": "ninguna",
-        "estado": "activo", "grupo_familiar_id": None, "fecha_alta": "2026-09-10",
-        "email": "lucia.fernandez@example.com",
+        "dni": "45111222", "categoria": "cadete", "disciplina_principal": "basquet",
+        "estado": "activo", "grupo_familiar_id": "g2", "fecha_alta": "2026-09-10",
+        "email": None,
     },
     {
         "id": "4", "nro_socio": 234, "nombre": "Marcos", "apellido": "Diaz",
@@ -50,7 +50,12 @@ _SOCIOS_DEMO = [
 ]
 
 _GRUPOS_DEMO = [
-    {"id": "g1", "nombre_grupo": "Familia Martinez", "responsable_socio_id": "1"},
+    {"id": "g1", "nombre_grupo": "Familia Martinez", "responsable_socio_id": "1",
+     "responsable_nombre": None, "responsable_dni": None,
+     "responsable_telefono": None, "responsable_email": None},
+    {"id": "g2", "nombre_grupo": "Familia Fernandez", "responsable_socio_id": None,
+     "responsable_nombre": "Ana Fernandez", "responsable_dni": "28555111",
+     "responsable_telefono": "11-5555-1234", "responsable_email": "ana.fernandez@example.com"},
 ]
 
 _CUOTAS_DEMO = [
@@ -355,13 +360,28 @@ def crear_grupo(nombre_grupo):
     return _client.table("grupos_familiares").insert({"nombre_grupo": nombre_grupo}).execute().data[0]
 
 
-def asignar_responsable_grupo(grupo_id, socio_id):
+def actualizar_responsable_grupo(grupo_id, socio_id=None, datos_no_socio=None):
+    """Setea el responsable del grupo: un socio (socio_id) o una persona
+    que no es socio (datos_no_socio = {nombre, dni, telefono, email}).
+    Son excluyentes entre si; la forma que no se usa queda vacia."""
+    cambios = {
+        "responsable_socio_id": socio_id,
+        "responsable_nombre": None, "responsable_dni": None,
+        "responsable_telefono": None, "responsable_email": None,
+    }
+    if not socio_id and datos_no_socio:
+        cambios.update({
+            "responsable_nombre": datos_no_socio.get("nombre") or None,
+            "responsable_dni": datos_no_socio.get("dni") or None,
+            "responsable_telefono": datos_no_socio.get("telefono") or None,
+            "responsable_email": datos_no_socio.get("email") or None,
+        })
     if Config.MODO_DEMO:
         g = obtener_grupo(grupo_id)
         if g:
-            g["responsable_socio_id"] = socio_id
+            g.update(cambios)
         return
-    _client.table("grupos_familiares").update({"responsable_socio_id": socio_id}).eq("id", grupo_id).execute()
+    _client.table("grupos_familiares").update(cambios).eq("id", grupo_id).execute()
 
 
 def eliminar_grupo(grupo_id):
@@ -416,7 +436,7 @@ def cuotas_pendientes_grupo(grupo_familiar_id):
 
 def email_para_recibo(socio_id):
     """Email a donde mandar el recibo: el del socio, o si no tiene
-    cargado, el del responsable de su grupo familiar."""
+    cargado, el del responsable de su grupo familiar (sea socio o no)."""
     socio = obtener_socio(socio_id)
     if not socio:
         return None
@@ -426,11 +446,15 @@ def email_para_recibo(socio_id):
     if not grupo_id:
         return None
     grupo = obtener_grupo(grupo_id)
-    responsable_id = grupo.get("responsable_socio_id") if grupo else None
-    if not responsable_id or responsable_id == socio_id:
+    if not grupo:
         return None
-    responsable = obtener_socio(responsable_id)
-    return responsable.get("email") if responsable else None
+    responsable_id = grupo.get("responsable_socio_id")
+    if responsable_id:
+        if responsable_id == socio_id:
+            return None
+        responsable = obtener_socio(responsable_id)
+        return responsable.get("email") if responsable else None
+    return grupo.get("responsable_email")
 
 
 # ---------------------------------------------------------------------

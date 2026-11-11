@@ -51,6 +51,7 @@ def buscar_por_qr(codigo_hash):
 def ficha_socio(socio_id):
     socio = db.obtener_socio(socio_id)
     grupo_id = socio.get("grupo_familiar_id") if socio else None
+    grupo = db.obtener_grupo(grupo_id) if grupo_id else None
 
     if grupo_id:
         # vencidas al dia, con su recargo, para todos los integrantes
@@ -62,9 +63,19 @@ def ficha_socio(socio_id):
         cuotas = db.cuotas_pendientes_de_socio(socio_id)
 
     total = sum(c["monto"] + (c.get("monto_recargo") or 0) for c in cuotas)
+
+    responsable_nombre = None
+    if grupo:
+        if grupo.get("responsable_socio_id"):
+            r = db.obtener_socio(grupo["responsable_socio_id"])
+            responsable_nombre = f"{r['nombre']} {r['apellido']}" if r else None
+        else:
+            responsable_nombre = grupo.get("responsable_nombre")
+
     return render_template(
         "recepcion/ficha_cobro.html", socio=socio, cuotas=cuotas, total=total,
         email_habilitado=bool(Config.EMAIL_PROVIDER),
+        grupo=grupo, responsable_nombre=responsable_nombre,
     )
 
 
@@ -171,9 +182,48 @@ def alta_socio():
     db.guardar_actividades(socio["id"], actividades)
 
     if grupo_nuevo:  # el primer socio del grupo nuevo queda como responsable
-        db.asignar_responsable_grupo(grupo_nuevo["id"], socio["id"])
+        db.actualizar_responsable_grupo(grupo_nuevo["id"], socio_id=socio["id"])
 
     return redirect(url_for("recepcion.ficha_socio", socio_id=socio["id"]))
+
+
+@recepcion_bp.route("/grupos/<grupo_id>/responsable", methods=["GET", "POST"])
+def responsable_grupo(grupo_id):
+    grupo = db.obtener_grupo(grupo_id)
+    if not grupo:
+        abort(404)
+    miembros = db.socios_de_grupo(grupo_id)
+    volver_socio_id = request.values.get("socio_id", "")
+
+    if request.method == "POST":
+        tipo = request.form.get("tipo_responsable", "")
+        if tipo == "socio":
+            socio_id = request.form.get("responsable_socio_id", "")
+            if not any(m["id"] == socio_id for m in miembros):
+                flash("Elegi un integrante del grupo.", "error")
+            else:
+                db.actualizar_responsable_grupo(grupo_id, socio_id=socio_id)
+                flash("Responsable actualizado.", "ok")
+        else:
+            nombre = request.form.get("responsable_nombre", "").strip()
+            if not nombre:
+                flash("El nombre del responsable es obligatorio.", "error")
+            else:
+                db.actualizar_responsable_grupo(grupo_id, datos_no_socio={
+                    "nombre": nombre,
+                    "dni": request.form.get("responsable_dni", "").strip(),
+                    "telefono": request.form.get("responsable_telefono", "").strip(),
+                    "email": request.form.get("responsable_email", "").strip(),
+                })
+                flash("Responsable actualizado.", "ok")
+        if volver_socio_id:
+            return redirect(url_for("recepcion.ficha_socio", socio_id=volver_socio_id))
+        return redirect(url_for("recepcion.responsable_grupo", grupo_id=grupo_id))
+
+    return render_template(
+        "recepcion/responsable_grupo.html", grupo=grupo, miembros=miembros,
+        volver_socio_id=volver_socio_id,
+    )
 
 
 @recepcion_bp.route("/socio/<socio_id>/baja", methods=["POST"])

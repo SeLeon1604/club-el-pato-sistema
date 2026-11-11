@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% set manifest_href = "/static/manifest_recepcion.json" %}
+{% block title %}Responsable del grupo{% endblock %}
+
+{% block content %}
+<h1>{{ grupo.nombre_grupo or "Grupo familiar" }}</h1>
+<p class="subtitle">
+  Integrantes:
+  {% for m in miembros %}{{ m.nombre }} {{ m.apellido }}{{ ", " if not loop.last }}{% else %}sin integrantes{% endfor %}
+</p>
+
+<form method="POST" class="form-alta">
+  {% if volver_socio_id %}<input type="hidden" name="socio_id" value="{{ volver_socio_id }}">{% endif %}
+  {% set es_socio = grupo.responsable_socio_id is not none %}
+
+  <label>El responsable...</label>
+  <select name="tipo_responsable" id="tipo-responsable">
+    <option value="socio" {{ "selected" if es_socio }}>Es un integrante del grupo (socio)</option>
+    <option value="no_socio" {{ "selected" if not es_socio }}>No es socio</option>
+  </select>
+
+  <div id="bloque-socio" hidden>
+    <label>Integrante responsable</label>
+    <select name="responsable_socio_id">
+      {% for m in miembros %}
+      <option value="{{ m.id }}" {{ "selected" if m.id == grupo.responsable_socio_id }}>
+        {{ m.nombre }} {{ m.apellido }} (Socio N° {{ m.nro_socio }})
+      </option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div id="bloque-no-socio" hidden>
+    <label>Nombre y apellido</label>
+    <input type="text" name="responsable_nombre" value="{{ grupo.responsable_nombre or '' }}">
+    <label>DNI</label>
+    <input type="text" name="responsable_dni" value="{{ grupo.responsable_dni or '' }}">
+    <label>Telefono</label>
+    <input type="text" name="responsable_telefono" value="{{ grupo.responsable_telefono or '' }}">
+    <label>Email</label>
+    <input type="email" name="responsable_email" value="{{ grupo.responsable_email or '' }}">
+  </div>
+
+  <button type="submit">Guardar</button>
+</form>
+
+<a href="{{ url_for('recepcion.ficha_socio', socio_id=volver_socio_id) if volver_socio_id else url_for('recepcion.index') }}" class="link-salir">Volver</a>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+(function () {
+  var tipo = document.getElementById("tipo-responsable");
+  var bloqueSocio = document.getElementById("bloque-socio");
+  var bloqueNoSocio = document.getElementById("bloque-no-socio");
+
+  function actualizar() {
+    bloqueSocio.hidden = tipo.value !== "socio";
+    bloqueNoSocio.hidden = tipo.value !== "no_socio";
+  }
+  tipo.addEventListener("change", actualizar);
+  actualizar();
+})();
+</script>
+{% endblock %}
