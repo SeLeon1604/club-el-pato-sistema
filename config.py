@@ -36,3 +36,8 @@ class Config:
     SMTP_USER = os.environ.get("SMTP_USER", "")
     SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD", "")
     SMTP_USE_TLS = os.environ.get("SMTP_USE_TLS", "true").lower() != "false"
+
+    # Tope (en segundos) de la demora que se suma a cada intento de
+    # login fallido seguido, para frenar la adivinanza por fuerza
+    # bruta sin bloquear al usuario (ver blueprints/auth.py).
+    LOGIN_DEMORA_MAXIMA_SEG = int(os.environ.get("LOGIN_DEMORA_MAXIMA_SEG", "15"))

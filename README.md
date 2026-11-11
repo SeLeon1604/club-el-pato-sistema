@@ -36,7 +36,7 @@ y correr `schema.sql` en el SQL editor de Supabase para crear las tablas.
 ## Usuarios y base de datos
 
 - Correr `schema.sql` y despues, en orden, las migraciones de la
-  carpeta `migraciones/` (002, 003, 004...) en Supabase.
+  carpeta `migraciones/` (002 a 006...) en Supabase.
 - Usar la **service key** en `SUPABASE_KEY` y definir `SECRET_KEY`.
   Esta app no usa Supabase Auth (el login es propio, con sesion de
   Flask), asi que el backend siempre pasa por la service key - por
@@ -45,6 +45,11 @@ y correr `schema.sql` en el SQL editor de Supabase para crear las tablas.
   se filtra (ver el comentario en `schema.sql`).
 - Crear usuarios con hash: `python crear_usuario.py <rol> <email|dni>`
   (recepcion usa PIN por persona; el resto contrasena).
+- Cada intento de login fallido seguido demora un poco mas la
+  respuesta (hasta `LOGIN_DEMORA_MAXIMA_SEG`, por defecto 15), para
+  frenar la adivinanza por fuerza bruta del PIN sin bloquear a nadie:
+  con la credencial correcta se entra de inmediato aunque hayan
+  fallado muchos intentos antes.
 - Modo demo: `recepcion@elpato.local`/1234, `comision@elpato.local`,
   `admin@elpato.local` y socio DNI 30123456, los tres con `demo1234`.
 

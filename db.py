@@ -77,16 +77,20 @@ def _hash_demo(clave):
 _USUARIOS_DEMO = [
     {"id": "u1", "rol": "recepcion", "email": "recepcion@elpato.local",
      "dni_login": None, "socio_id": None, "activo": True,
-     "pin_hash": _hash_demo("1234"), "password_hash": None},
+     "pin_hash": _hash_demo("1234"), "password_hash": None,
+     "intentos_fallidos": 0},
     {"id": "u2", "rol": "comision", "email": "comision@elpato.local",
      "dni_login": None, "socio_id": None, "activo": True,
-     "pin_hash": None, "password_hash": _hash_demo("demo1234")},
+     "pin_hash": None, "password_hash": _hash_demo("demo1234"),
+     "intentos_fallidos": 0},
     {"id": "u3", "rol": "socio", "email": None,
      "dni_login": "30123456", "socio_id": "1", "activo": True,
-     "pin_hash": None, "password_hash": _hash_demo("demo1234")},
+     "pin_hash": None, "password_hash": _hash_demo("demo1234"),
+     "intentos_fallidos": 0},
     {"id": "u4", "rol": "admin", "email": "admin@elpato.local",
      "dni_login": None, "socio_id": None, "activo": True,
-     "pin_hash": None, "password_hash": _hash_demo("demo1234")},
+     "pin_hash": None, "password_hash": _hash_demo("demo1234"),
+     "intentos_fallidos": 0},
 ]
 
 _ACTIVIDADES_DEMO = {"1": {"hockey"}, "2": {"hockey"}}
@@ -197,6 +201,31 @@ def obtener_usuario_para_login(identificador, rol):
         .data
     )
     return res[0] if res else None
+
+
+def registrar_intento_fallido(usuario_id):
+    """Suma 1 a los intentos fallidos seguidos del usuario."""
+    if Config.MODO_DEMO:
+        u = next((u for u in _USUARIOS_DEMO if u["id"] == usuario_id), None)
+        if u:
+            u["intentos_fallidos"] = u.get("intentos_fallidos", 0) + 1
+        return
+
+    actual = (
+        _client.table("usuarios").select("intentos_fallidos")
+        .eq("id", usuario_id).limit(1).execute().data
+    )
+    intentos = (actual[0]["intentos_fallidos"] if actual else 0) + 1
+    _client.table("usuarios").update({"intentos_fallidos": intentos}).eq("id", usuario_id).execute()
+
+
+def resetear_intentos_fallidos(usuario_id):
+    if Config.MODO_DEMO:
+        u = next((u for u in _USUARIOS_DEMO if u["id"] == usuario_id), None)
+        if u:
+            u["intentos_fallidos"] = 0
+        return
+    _client.table("usuarios").update({"intentos_fallidos": 0}).eq("id", usuario_id).execute()
 
 
 def crear_usuario(rol, identificador, clave, socio_id=None):
