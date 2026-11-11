@@ -134,11 +134,11 @@ static/
 - Fixture y auspiciantes ya tienen pantalla en `/admin` (cargar partido,
   registrar resultado, cargar y editar auspiciante). Ya no hace falta
   insertarlos a mano en Supabase.
+- Los iconos de las 3 PWA (`static/icons/icon-192.png` e `icon-512.png`)
+  son el escudo real del club.
 
 ## Pendiente (a definir en las proximas iteraciones)
 
-- **Iconos de la PWA**: los manifests apuntan a `/static/icons/` que
-  todavia no tiene los PNG (192x192 y 512x512).
 - **Responsable de grupo familiar no-socio**: por ahora el
   responsable de un grupo familiar siempre es un socio (categoria
   `adherente` si no practica ninguna actividad). Queda pendiente de
