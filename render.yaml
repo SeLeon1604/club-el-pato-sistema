@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: club-el-pato
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    healthCheckPath: /login
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_KEY
+        sync: false
+      - key: CLUB_TZ
+        value: America/Argentina/Buenos_Aires
+      - key: CLUB_NOMBRE
+        value: Club El Pato

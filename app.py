@@ -42,6 +42,10 @@ def create_app():
     return app
 
 
+# Instancia a nivel de modulo: es la que importa gunicorn en produccion
+# (gunicorn app:app). El modo debug solo se activa al correr este
+# archivo directo (python app.py) para desarrollo local.
+app = create_app()
+
 if __name__ == "__main__":
-    app = create_app()
     app.run(debug=True, host="0.0.0.0", port=5000)

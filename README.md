@@ -53,6 +53,21 @@ y correr `schema.sql` en el SQL editor de Supabase para crear las tablas.
 - Modo demo: `recepcion@elpato.local`/1234, `comision@elpato.local`,
   `admin@elpato.local` y socio DNI 30123456, los tres con `demo1234`.
 
+## Deploy (Render)
+
+Hay un `render.yaml` con la config lista (Blueprint):
+
+1. En Render: New > Blueprint > elegir este repo de GitHub.
+2. Render crea el web service solo (`gunicorn app:app`); `SECRET_KEY`
+   se genera solo, pero pide a mano `SUPABASE_URL` y `SUPABASE_KEY`
+   (la service key) - se cargan directo en Render, nunca en el repo.
+3. Render da HTTPS de entrada en su dominio `.onrender.com`, necesario
+   para que el lector de QR de recepcion pueda usar la camara (el
+   navegador la bloquea en origenes sin HTTPS que no sean localhost).
+4. Una vez arriba, crear los usuarios reales corriendo
+   `crear_usuario.py` localmente con `SUPABASE_URL`/`SUPABASE_KEY` de
+   produccion exportadas (el modo demo no sirve en produccion).
+
 ## Constancia de pago por email (opcional)
 
 Sin configurar nada, el cobro en recepcion sigue dejando el PDF
