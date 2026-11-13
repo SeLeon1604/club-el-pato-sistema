@@ -3,6 +3,7 @@ App de recepcion (tablet). Rol: recepcion.
 Pantallas: menu principal, busqueda, ficha+cobro, alta de socio.
 """
 from flask import Blueprint, render_template, request, session, redirect, url_for, jsonify, Response, abort, flash
+from werkzeug.datastructures import MultiDict
 from config import Config
 import cuotas as cuotas_service
 import db
@@ -136,7 +137,7 @@ def buscar_grupos():
 @recepcion_bp.route("/socio/nuevo", methods=["GET", "POST"])
 def alta_socio():
     if request.method == "GET":
-        return render_template("recepcion/alta_socio.html", form={}, error=None)
+        return render_template("recepcion/alta_socio.html", form=MultiDict(), error=None)
 
     form = request.form
     datos = {
