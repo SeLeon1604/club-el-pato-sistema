@@ -17,6 +17,18 @@
   <label>DNI</label>
   <input type="text" name="dni" value="{{ form.get('dni', '') }}" required>
 
+  <label>Fecha de nacimiento</label>
+  <input type="date" name="fecha_nacimiento" value="{{ form.get('fecha_nacimiento', '') }}">
+
+  <label>Email</label>
+  <input type="email" name="email" value="{{ form.get('email', '') }}">
+
+  <label>Telefono</label>
+  <input type="text" name="telefono" value="{{ form.get('telefono', '') }}">
+
+  <label>Direccion</label>
+  <input type="text" name="direccion" value="{{ form.get('direccion', '') }}">
+
   <label>Categoria</label>
   <select name="categoria">
     <option value="activo">Activo</option>
